@@ -28,4 +28,12 @@ actor ClientManager {
   func broadcastToAll(message: String) {
     storage.values.forEach { $0.socket.send(message) }
   }
+
+  // Disconnects all clients and removes them from storage
+  func clean() async {
+    for client in storage.values {
+      try? await client.socket.close()
+    }
+    self.storage.removeAll()
+  }
 }

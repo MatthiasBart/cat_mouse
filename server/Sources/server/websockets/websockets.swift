@@ -1,8 +1,6 @@
 import Vapor
 
-let manager = ClientManager()
-
-func webSockets(_ app: Application) throws {
+func webSockets(_ manager: ClientManager, _ app: Application) throws {
   app.webSocket("game") { req, ws in
     let client = GameClient(socket: ws, role: .cat)
 
@@ -14,20 +12,29 @@ func webSockets(_ app: Application) throws {
 
     ws.onText { ws, text in
       req.logger.debug("Received from \(client.id): \(text)")
-      guard let data = text.data(using: .utf8) else {
-        req.logger.error("Could not convert text to UTF-8 data")
-        return
+      do {
+        guard let data = text.data(using: .utf8) else {
+          throw GameError.malformedData
+        }
+
+        let decoder = JSONDecoder()
+
+        struct MessageTypePeek: Codable { let type: MessageType }
+        guard let peek = try? decoder.decode(MessageTypePeek.self, from: data) else {
+          throw GameError.unknownType
+        }
+
+        handleMessage(type: peek.type, data: data, playerID: client.id)
+      } catch let error as GameError {
+        let response = ErrorMessage(code: error.rawValue, message: error.localizedDescription)
+        if let json = try? JSONEncoder().encode(response),
+          let jsonString = String(data: json, encoding: .utf8)
+        {
+          ws.send(jsonString)
+        }
+      } catch {
+        print("unkown error")
       }
-
-      let decoder = JSONDecoder()
-
-      struct MessageTypePeek: Codable { let type: MessageType }
-      guard let peek = try? decoder.decode(MessageTypePeek.self, from: data) else {
-        req.logger.error("Message missing 'type' field. Raw: \(text)")
-        return
-      }
-
-      handleMessage(type: peek.type, data: data, playerID: client.id)
     }
 
     ws.onClose.whenComplete { _ in

@@ -6,6 +6,12 @@ enum MessageType: String, Codable {
   // TODO: a lot more types needed
 }
 
-protocol Message: Codable {
+protocol Message {
   var type: MessageType { get }
+}
+
+protocol ClientMessage: Message, Decodable {
+}
+
+protocol ServerMessage: Message, Encodable {
 }
