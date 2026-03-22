@@ -1,6 +1,6 @@
-# WebSocket Protocol
+# WebSocket API Spec 
 
-Clients connect to a WebSocket via the url received after either creating or joining a game (REST routes `/join/{code}` or `create`).
+Clients connect to a WebSocket via the url received after either creating or joining a game (see [REST specs](./REST.md).
 
 ## Messages (WIP)
 ### Overview
