@@ -38,19 +38,19 @@ struct GameController: RouteCollection {
   private func onText(_ req: Request, _ ws: WebSocket, _ playerID: UUID, _ text: String) {
     do {
       guard let data = text.data(using: .utf8) else {
-        throw GameError.malformedJSON
+        throw GameError.invalidJSON
       }
 
       let decoder = JSONDecoder()
 
       struct Peek: Codable { let type: ClientMessageType }
       guard let peek = try? decoder.decode(Peek.self, from: data) else {
-        throw GameError.unknownType
+        throw GameError.invalidType
       }
 
       try self.handleMessage(type: peek.type, data: data, playerID: playerID, req: req)
     } catch let error as GameError {
-      req.logger.error("Game Logic Error (\(playerID)): \(error)")
+      req.logger.error("Game Error (\(playerID)): \(error)")
       Task { await manager.sendError(error, to: playerID) }
 
     } catch {
@@ -75,7 +75,7 @@ struct GameController: RouteCollection {
       }
     } catch {
       req.logger.debug("Failed to decode message \(error)")
-      throw GameError.malformedJSON
+      throw GameError.invalidJSON
     }
   }
 }
