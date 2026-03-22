@@ -43,7 +43,7 @@ struct GameController: RouteCollection {
 
       let decoder = JSONDecoder()
 
-      struct Peek: Codable { let type: MessageType }
+      struct Peek: Codable { let type: ClientMessageType }
       guard let peek = try? decoder.decode(Peek.self, from: data) else {
         throw GameError.unknownType
       }
@@ -59,16 +59,19 @@ struct GameController: RouteCollection {
     }
   }
 
-  private func handleMessage(type: MessageType, data: Data, playerID: UUID, req: Request) throws {
+  private func handleMessage(type: ClientMessageType, data: Data, playerID: UUID, req: Request)
+    throws
+  {
     let decoder = JSONDecoder()
     do {
       switch type {
       case .move:
         let move = try decoder.decode(Move.self, from: data)
         req.logger.debug("MOVE: \(playerID) -> \(move.test)")
-
-      case .gameOver, .gameUpdate, .error:
-        req.logger.info("Ignoring server-side message type: \(type)")
+        Task {
+          // TODO: real values
+          await manager.send(GameUpdate(seq: 1, time: 1000), to: playerID)
+        }
       }
     } catch {
       req.logger.debug("Failed to decode message \(error)")

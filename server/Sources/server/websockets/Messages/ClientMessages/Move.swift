@@ -1,4 +1,4 @@
 struct Move: ClientMessage {
-  var type: MessageType { .move }
+  var type: ClientMessageType { .move }
   var test: String  // TODO: replace with real data
 }

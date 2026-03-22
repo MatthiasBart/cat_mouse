@@ -1,17 +1,17 @@
-enum MessageType: String, Codable {
+enum ClientMessageType: String, Codable {
+  case move = "MOVE"
+}
+
+protocol ClientMessage: Decodable {
+  var type: ClientMessageType { get }
+}
+
+enum ServerMessageType: String, Codable {
   case gameUpdate = "GAME_UPDATE"
   case gameOver = "GAME_OVER"
-  case move = "MOVE"
   case error = "ERROR"
-  // TODO: a lot more types needed
 }
 
-protocol Message {
-  var type: MessageType { get }
-}
-
-protocol ClientMessage: Message, Decodable {
-}
-
-protocol ServerMessage: Message, Encodable {
+protocol ServerMessage: Encodable {
+  var type: ServerMessageType { get }
 }

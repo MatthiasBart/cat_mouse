@@ -14,32 +14,36 @@ actor ClientManager {
   }
 
   /// Sends a message to a specific group (e.g., all Cats)
-  func multicast(to group: Group, message: String) {
+  func multicast(to group: Group, message: some ServerMessage) {
     storage.values
       .filter { clients in
         clients.role == group && !clients.socket.isClosed
       }
       .forEach { client in
-        client.socket.send(message)
+        send(message, to: client.id)
       }
   }
 
   /// Sends a message to everyone
-  func broadcastToAll(message: String) {
-    storage.values.forEach { $0.socket.send(message) }
+  func broadcastToAll(message: some ServerMessage) {
+    storage.values.forEach { client in send(message, to: client.id) }
   }
 
   /// Sends a structured error to a specific player
   func sendError(_ error: GameError, to id: UUID) {
-    guard let client = storage[id], !client.socket.isClosed else { return }
-
     let errorMsg = ErrorMessage(
       code: error.rawValue,
       message: error.localizedDescription
     )
 
+    send(errorMsg, to: id)
+  }
+
+  func send(_ message: some ServerMessage, to id: UUID) {
+    guard let client = storage[id], !client.socket.isClosed else { return }
+
     do {
-      let data = try JSONEncoder().encode(errorMsg)
+      let data = try JSONEncoder().encode(message)
       if let jsonString = String(data: data, encoding: .utf8) {
         client.socket.send(jsonString)
       }

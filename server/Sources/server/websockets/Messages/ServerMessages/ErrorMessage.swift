@@ -1,5 +1,5 @@
 struct ErrorMessage: ServerMessage {
-  let type: MessageType = .error
+  let type: ServerMessageType = .error
   let code: Int
   let message: String
 

@@ -1,5 +1,11 @@
 struct GameUpdate: ServerMessage {
-  var type: MessageType { .gameUpdate }
+  let type: ServerMessageType
   let seq: Int
   let time: Int
+
+  init(seq: Int, time: Int) {
+    self.type = .gameUpdate
+    self.seq = seq
+    self.time = time
+  }
 }
