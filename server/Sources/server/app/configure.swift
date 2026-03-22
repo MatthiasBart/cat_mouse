@@ -6,6 +6,5 @@ public func configure(_ app: Application) async throws {
 
   app.lifecycle.use(GameLifecycleHandler(clientManager: manager))
 
-  // register websocket endpoints
-  try webSockets(manager, app)
+  try app.register(collection: GameController(clientManager: manager))
 }
