@@ -14,7 +14,7 @@ Clients connect to a WebSocket via the url received after either creating or joi
 | `BEGIN_VOTE` | Client -> Server |  |
 | `END_VOTE` | Client -> Server |  |
 | `VOTE` | Client -> Server |  |
-| `ERROR` | Server <-> Client |  |
+| `ERROR` | Server -> Client |  |
 
 ### Server -> Clients
 

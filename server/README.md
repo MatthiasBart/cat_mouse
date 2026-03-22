@@ -16,6 +16,11 @@ To run the project and start the server, use the following command:
 swift run
 ```
 
+To run with different log level:
+```
+swift run server --log debug
+```
+
 To execute tests, use the following command:
 
 ```bash
