@@ -2,7 +2,7 @@ class Subway {
     let entryA: Hole
     let entryB: Hole
 
-    init(entryA: Hole = Hole(position: .base), entryB: Hole = Hole(position: .base)) { 
+    init(entryA: Hole = Hole(), entryB: Hole = Hole()) { 
         self.entryA = entryA
         self.entryB = entryB
     }
@@ -11,7 +11,7 @@ class Subway {
 class Hole: Positionable {
     var position: Position
 
-    init(position: Position = .init(x: 0, y: 0)) {
+    init(position: Position = .base) {
         self.position = position
     }
 }

@@ -1,0 +1,8 @@
+- votings werden von einer maus gestartet welche dann den voting admin übernimmt
+- voting endet: 
+    - wenn admin maus beendet
+    - alle mäuse haben gevotet
+    - zeit
+- edge cases ergebn sich daraus: 
+    - was wenn admin maus subway verlässt
+    - ... denken
