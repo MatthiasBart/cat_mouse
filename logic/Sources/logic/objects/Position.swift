@@ -1,4 +1,4 @@
-struct Position { 
+struct Position {
     var x: Int64
     var y: Int64
 }
@@ -8,4 +8,3 @@ extension Position {
         Position(x: 0, y: 0)
     }
 }
-

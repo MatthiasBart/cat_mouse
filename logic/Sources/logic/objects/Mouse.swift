@@ -1,2 +1,1 @@
-protocol Mouse: Movable { }
-
+protocol Mouse: Movable {}

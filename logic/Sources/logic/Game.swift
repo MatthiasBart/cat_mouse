@@ -1,18 +1,15 @@
-import Foundation 
-
+import Foundation
 
 class Controller {
     var games: [String: Game] = [:]
 
-    init() {
-        
-    }
+    init() {}
 
     func createGame(with name: String) throws {
         if games[name] != nil {
             throw GameError.gameAlreadyExists
         }
-        
+
         games[name] = Game()
     }
 }
@@ -29,46 +26,43 @@ class Game {
     private(set) var stop: Bool = false
 
     init() {
-        self.players = []
-        self.subways = []
+        players = []
+        subways = []
 
         gameLoop()
     }
 
-
     func gameLoop() {
-        while(true) {
+        while true {
             if stop {
                 sendStopState()
                 break
             }
-            
+
             for player in players {
                 sendGameState(for: player.id)
             }
         }
     }
 
-    func sendStopState() {
-        
-    }
+    func sendStopState() {}
 
     func stopGame() {
-        self.stop = true 
+        stop = true
     }
 
     func sendGameState(for clientID: Int64) {
-        let _ = computeGameState(for: clientID)
+        _ = computeGameState(for: clientID)
     }
 
-    func computeGameState(for clientID: Int64) -> Data {
+    func computeGameState(for _: Int64) -> Data {
         return Data()
     }
 }
 
 struct Player {
     let id: Int64
-    let role: Role = .undefined     
+    let role: Role = .undefined
 }
 
 enum Role {
