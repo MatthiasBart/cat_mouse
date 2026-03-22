@@ -2,7 +2,7 @@ class Subway {
     let entryA: Hole
     let entryB: Hole
 
-    init(entryA: Hole = Hole(), entryB: Hole = Hole()) { 
+    init(entryA: Hole = Hole(), entryB: Hole = Hole()) {
         self.entryA = entryA
         self.entryB = entryB
     }

@@ -1,2 +1,1 @@
-protocol Cat: Movable { }
-
+protocol Cat: Movable {}
