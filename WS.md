@@ -1,6 +1,6 @@
 # WebSocket API Spec 
 
-Clients connect to a WebSocket via the url received after either creating or joining a game (see [REST specs](./REST.md).
+Clients can connect `/games/ws` to with a valid session (see [REST specs](./REST.md)).
 
 ## Messages (WIP)
 ### Overview

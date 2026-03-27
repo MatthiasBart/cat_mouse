@@ -9,3 +9,10 @@
         1. (Si Yu)
     2. Game Controller Spiel-Logik & KI: OOP
         1. Matthias (Architektur)
+
+## Run
+```
+docker compose up
+```
+* Server on Port 8080
+* 
