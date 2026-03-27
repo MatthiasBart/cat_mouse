@@ -21,7 +21,7 @@ struct GameSocketController: RouteCollection {
   }
 
   func boot(routes: any RoutesBuilder) throws {
-    routes.webSocket(":code", "ws") { req, ws in
+    routes.webSocket("games", "ws") { req, ws in
       self.connect(req: req, ws: ws)
     }
   }
@@ -29,8 +29,15 @@ struct GameSocketController: RouteCollection {
 
 extension GameSocketController: GameSocketControllerProtocol {
   func connect(req: Request, ws: WebSocket) {
-    // TODO: get role from session
-    let client = GameClient(socket: ws, role: .cat)
+    guard let session = PlayerSession(req: req) else {
+      ws.send("Connection rejected: Missing or invalid session.")
+      _ = ws.close(code: .policyViolation)
+      return
+    }
+
+    req.logger.info("Player \(session.playerName) ws connection.")
+
+    let client = GameClient(socket: ws, role: session.role)
 
     let storeTask = Task {
       await service.add(client)

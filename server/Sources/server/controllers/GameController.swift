@@ -30,24 +30,30 @@ struct GameController: RouteCollection {
 
 // MARK: Implementation
 extension GameController: GameControllerProtocol {
+  // TODO: prevent player from joining/creating multiple games with same session
   func createGame(req: Request) async throws -> Response {
     let (_, code) = await manager.createGame()
 
     let session = PlayerSession(req: req, code: code)
     session.save()
 
+    req.logger.info("Player \(session.playerName) created game \(session.code)")
     return try await session.output.encodeResponse(status: .created, for: req)
   }
 
   func joinGame(req: Request) async throws -> Response {
     guard let code = req.parameters.get(PlayerSession.codeKey), !code.isEmpty else {
-      throw Abort(.badRequest, reason: "Game code is missing or invalid")
+      throw Abort(.badRequest, reason: "Game code is missing")
     }
 
-    let playerName: String? = req.query[PlayerSession.playerNameKey]
-    let session = PlayerSession(req: req, code: code, playerName: playerName)
+    guard await manager.gameExists(code: code) else {
+      throw Abort(.notFound, reason: "Game code does not exists")
+    }
+
+    let session = PlayerSession(req: req, code: code)
     session.save()
 
+    req.logger.info("Player \(session.playerName) joined game \(session.code)")
     return try await session.output.encodeResponse(status: .ok, for: req)
   }
 
@@ -57,39 +63,5 @@ extension GameController: GameControllerProtocol {
 
   private func joinUrl(from code: String) -> String {
     "ws://localhost:8080/\(code)/ws"  // TODO: use real server url
-  }
-}
-
-// Mark: Player Session
-
-struct PlayerSession {
-  struct Output: Content {
-    let role: Role
-    let playerName: String
-    let code: String
-  }
-
-  static let playerNameKey = "playerName"
-  static let codeKey = "code"
-
-  let role: Role
-  let playerName: String
-  let code: String
-  let req: Request
-
-  init(req: Request, code: String, playerName: String? = nil) {
-    self.playerName = playerName ?? "Anonymous"
-    self.code = code
-    self.req = req
-    self.role = .random  // TODO: not random role assignment
-  }
-
-  func save() {
-    self.req.session.data[Self.playerNameKey] = self.playerName
-    self.req.session.data[Self.codeKey] = self.code
-  }
-
-  var output: Output {
-    Output(role: self.role, playerName: self.playerName, code: self.code)
   }
 }
