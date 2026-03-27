@@ -1,6 +1,6 @@
 import Vapor
 
-actor ClientManager {
+actor ClientsService {
   private var storage: [UUID: GameClient] = [:]
 
   // Adds client to storage
@@ -14,7 +14,7 @@ actor ClientManager {
   }
 
   /// Sends a message to a specific group (e.g., all Cats)
-  func multicast(to group: Group, message: some ServerMessage) {
+  func multicast(to group: Role, message: some ServerMessage) {
     storage.values
       .filter { clients in
         clients.role == group && !clients.socket.isClosed

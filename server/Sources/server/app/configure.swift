@@ -2,9 +2,8 @@ import Vapor
 
 /// configures your application
 public func configure(_ app: Application) async throws {
-  let manager = ClientManager()  // TODO: DI?
+  let clientsService = ClientsService()  // TODO: DI?
 
-  app.lifecycle.use(GameLifecycleHandler(clientManager: manager))
-
-  try app.register(collection: GameController(clientManager: manager))
+  app.lifecycle.use(GameLifecycleHandler(clientsService: clientsService))
+  try routes(app, clientsService: clientsService)
 }
