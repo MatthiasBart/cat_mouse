@@ -68,7 +68,11 @@ export function renderComponents(
               top: `${subway.y}px`,
             }}
           >
-            <p style={{ width: 50, height: 50 }}>🚇</p>
+            <img
+              src="./subway.png"
+              alt="subway"
+              style={{ width: 50, height: 50 }}
+            />
           </div>
         );
       })}
