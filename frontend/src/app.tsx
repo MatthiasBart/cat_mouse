@@ -1,85 +1,117 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 import "./app.css";
 import type { Game, Cat, Mouse } from "./types";
-import type { JSX } from "preact/jsx-runtime";
-//const WebSocket = require("ws");
-//const wss = new WebSocket.Server({ port: 8080 });
+import { renderComponents, renderGameField } from "./views/renderGameField";
+import { renderButton } from "./views/renderMenus";
 
-function renderComponents(gameState: Game, onMove: () => void): JSX.Element {
-  return (
-    <div>
-      {gameState.mice.map((mouse: Mouse, index: number) => {
-        return (
-          <div
-            key={index}
-            style={{
-              position: "relative",
-              left: `${mouse.x}px`,
-              top: `${mouse.y}px`,
-            }}
-          >
-            <p style={{ fontSize: 50 }}>🙀</p>
-          </div>
-        );
-      })}{" "}
-    </div>
-  );
+//const wss = new WebSocket.Server({ port: 8080 });
+//const websocket = new WebSocket("ws://localhost:8080/games/ws");
+
+/*
+async function renderMain() {
+  //login()
+  //renderTunnels()
+  //
+
+
+  map(tunnels) { tunnel in 
+    render(tunnel)
+  }
 }
+
+renderMain();
+
+
+async function renderTunnels(tunnels: Tunnel[]) {
+
+        foreach(tunnel) return renderTunnels()
+}
+
+*/
 
 /*async function getInitialState() {
 
   
 }*/
 
-function renderGameField(
-  gameState: Game,
-  renderFunction: (gameState: Game, onMove: () => void) => JSX.Element,
-): JSX.Element {
-  return (
-    <div
-      style={{
-        flex: 1,
-        backgroundColor: "yellow",
-        minWidth: 400,
-      }}
-    >
-      {renderFunction(gameState, () => {})}
-    </div>
-  );
-}
-
 export function App() {
   //const [count, setCount] = useState(0);
 
   //const initialState: Game = { game: null };
+  const [gameCode, setGameCode] = useState<string | null>(null);
   const [gameState, setGameState] = useState<Game>({
+    player: { type: "cat", name: "todo", x: 100, y: 100 },
     mice: [
       { x: 10, y: 10 },
       { x: 55, y: 200 },
+      { x: 100, y: 100 },
+      { x: 100, y: 100 },
     ],
-    subways: [],
-    cats: [],
+    subways: [{ x: 100, y: 100 }],
+    cats: [
+      { x: 150, y: 70 },
+      { x: 200, y: 140 },
+      { x: 250, y: 50 },
+      { x: 300, y: 180 },
+    ],
   });
   //const getNewStuff(stuff => renderGameField(stuff))
   //const [messages, setMessages] = useState([]);
 
-  const [ws, setWs] = useState(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  /*useEffect(() => {
-    const websocket = new WebSocket("ws://localhost:8080");
-    setWs(websocket);
+  const joinGame = async (gameCode: string): Promise<string> => {
+    console.log("Joining game " + gameCode);
+    const response = await fetch(
+      `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}`,
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    );
+    //console.log(response);
+    console.log("opening websocket");
+    const socket = new WebSocket("ws://localhost:8080/games/ws");
 
-    websocket.onopen = () => console.log("Connected to WebSocket server");
-    websocket.onmessage = (event: any) => {
+    socket.onopen = () => console.log("Connected to WebSocket server");
+    socket.onmessage = (event: MessageEvent) => {
+      console.log("onmessage:", event.data);
       // setGameState(...)
-      //setMessages((prevMessages: any) => [...prevMessages, event.data]);
     };
-    websocket.onclose = () => console.log("Disconnected from WebSocket server");
+    socket.onclose = () => console.log("Disconnected from WebSocket server");
+    socket.onerror = (err) => console.error("WebSocket error:", err);
+    wsRef.current = socket;
+    wsRef.current = socket;
+    return gameCode;
+  };
+  const exitGame = () => {
+    wsRef.current?.close();
+    wsRef.current = null;
+    setGameCode(null);
+  };
 
-    // Cleanup on unmount
-    return () => websocket.close();
-  }, []);*/
+  useEffect(() => {}, [wsRef.current]);
+  useEffect(() => {}, [gameCode, gameState]);
+
+  useEffect(() => {
+    return () => wsRef.current?.close();
+  }, []);
+
+  const createGame = async (): Promise<string> => {
+    const res = await fetch("http://localhost:8080/games", {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("Failed to create game");
+    const data = await res.json(); // { role, playerName, code }
+    console.log("gamecode. " + data.code);
+    return data.code;
+  };
+
+  // return UI with Join button calling joinGame
+
+  // https://medium.com/@chaman388/websockets-in-reactjs-a-practical-guide-with-real-world-examples-2efe483ee150
 
   /*const sendMessage = () => {
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -88,11 +120,71 @@ export function App() {
     }
   };*/
 
-  const onMove = () => {
-    console.log("onMove");
+  const onMove = (ws: WebSocket | null) => {
+    if (!ws) return;
+    ws.send(JSON.stringify({ type: "MOVE", test: "test" }));
   };
-
   useEffect(() => {
+    if (!gameCode) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key !== "ArrowUp" &&
+        e.key !== "ArrowDown" &&
+        e.key !== "ArrowLeft" &&
+        e.key !== "ArrowRight"
+      ) {
+        return;
+      }
+      console.log("onKeyDown " + e.key);
+      e.preventDefault();
+      const ws = wsRef.current;
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(
+        JSON.stringify({
+          type: "MOVE",
+          test: e.key,
+        }),
+      );
+
+      // Change the player's x or y coordinates depending on the key press
+      setGameState((prevGameState: Game) => {
+        if (!prevGameState || !prevGameState.player) return prevGameState;
+        let { x, y } = prevGameState.player;
+        switch (e.key) {
+          case "ArrowUp":
+            y -= 10;
+            break;
+          case "ArrowDown":
+            y += 10;
+            break;
+          case "ArrowLeft":
+            x -= 10;
+            break;
+          case "ArrowRight":
+            x += 10;
+            break;
+          default:
+            break;
+        }
+        // Keep within bounds if needed (optional, can be removed/modified)
+        x = Math.max(0, Math.min(350, x));
+        y = Math.max(0, Math.min(350, y));
+
+        return {
+          ...prevGameState,
+          player: {
+            ...prevGameState.player,
+            x,
+            y,
+          },
+        };
+      });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [gameCode]);
+
+  /*useEffect(() => {
     const intervalId = setInterval(() => {
       setGameState((prevGameState: Game) => {
         if (prevGameState.mice.length === 0) {
@@ -126,13 +218,19 @@ export function App() {
     }, 50);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, []);*/
 
   return (
     <>
       <section id="center">
         <h1>Cat & Mouse</h1>
-        {gameState && renderGameField(gameState, renderComponents)}
+        {gameCode && renderButton("Exit", exitGame)}
+        {gameState && gameCode && renderGameField(gameState, renderComponents)}
+        {!gameCode &&
+          renderButton("Create Game", async () => {
+            const gameCode = await joinGame(await createGame());
+            setGameCode(gameCode);
+          })}
       </section>
 
       <section id="next-steps">
