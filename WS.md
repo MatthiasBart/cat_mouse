@@ -64,7 +64,7 @@ When player joins a game as a cat:
 {
   "type": "GAME_INIT",
   "role": "mouse",
-  "subways: [ {
+  "subways: [{
       "exits": { "x": number, "y": number }[]
     }]
 }
