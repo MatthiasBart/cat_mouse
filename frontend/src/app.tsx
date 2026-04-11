@@ -68,7 +68,8 @@ export function App() {
   const joinGame = async (gameCode: string): Promise<string> => {
     console.log("Joining game " + gameCode);
     const response = await fetch(
-      `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}`,
+      `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}`, // todo add role:
+      // joinGame and createGame also set the playerId, see REST.md
       {
         method: "POST",
         credentials: "include",
@@ -103,6 +104,7 @@ export function App() {
   }, []);
 
   const createGame = async (): Promise<string> => {
+    // todo: it also auto-joins that game
     const res = await fetch("http://localhost:8080/games", {
       method: "POST",
       credentials: "include",
@@ -125,6 +127,8 @@ export function App() {
   };*/
 
   const onMove = (ws: WebSocket | null) => {
+    // according to claude, the client renders his own prediction but the server validates
+
     if (!ws) return;
     ws.send(JSON.stringify({ type: "MOVE", test: "test" }));
   };
@@ -171,7 +175,7 @@ export function App() {
             break;
         }
         // Keep within bounds if needed (optional, can be removed/modified)
-        x = Math.max(0, Math.min(350, x));
+        x = Math.max(0, Math.min(350, x)); // todo gamefield size width and height
         y = Math.max(0, Math.min(350, y));
 
         return {

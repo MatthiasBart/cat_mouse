@@ -10,7 +10,7 @@ export function renderGameField(
       style={{
         flex: 1,
         backgroundColor: "grey",
-        width: 400,
+        width: 400, // todo from game init msg
         height: 400,
       }}
     >
