@@ -20,14 +20,15 @@ enum GameError: Error {
 
 class Game {
     let players: [Player]
-
     let subways: [Subway]
+    let votings: [Subway.ID:VotingRound]
 
     private(set) var stop: Bool = false
 
     init() {
         players = []
         subways = []
+        votings = [:]
 
         gameLoop()
     }

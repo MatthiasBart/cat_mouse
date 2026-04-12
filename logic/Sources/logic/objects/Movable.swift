@@ -1,4 +1,4 @@
-protocol Movable: AnyObject, Positionable { // TODO: Use actor
+protocol Movable: AnyObject, Positionable { 
     func move(to position: Position)
     func move(x: Int64, y: Int64)
 }

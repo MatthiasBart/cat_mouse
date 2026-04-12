@@ -1,10 +1,8 @@
-class Subway {
-    let entryA: Hole
-    let entryB: Hole
+class Subway: Identifiable {
+    let exits: [Hole]
 
-    init(entryA: Hole = Hole(), entryB: Hole = Hole()) {
-        self.entryA = entryA
-        self.entryB = entryB
+    init(exits: [Hole] = []) {
+        self.exits = exits
     }
 }
 
