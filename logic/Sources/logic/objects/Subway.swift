@@ -1,7 +1,9 @@
 class Subway: Identifiable {
+    let id: Int64
     let exits: [Hole]
 
-    init(exits: [Hole] = []) {
+    init(id: Int64, exits: [Hole] = []) {
+        self.id = id
         self.exits = exits
     }
 }
