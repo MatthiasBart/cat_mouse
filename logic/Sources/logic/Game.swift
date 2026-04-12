@@ -22,9 +22,9 @@ enum GameError: Error {
 
 
 class Game {
-    let players: [any Player]
-    let subways: [Subway]
-    let votings: [Subway.ID:VotingRound]
+    var players: [any Player]
+    var subways: [Subway]
+    var votings: [Subway.ID:VotingRound]
 
     var cats: [Cat] { 
         players.compactMap {
@@ -92,7 +92,7 @@ class Game {
     func gameState(for mouse: Mouse) -> Data {
         if let subway = mouse.subway {
             return GameStateDTOBuilder()
-                .mice([])
+                .mice(mice.filter { $0.subway == subway })
                 .votes(.init(endTime: Date(), votings: [:]))
                 .player(mouse)
                 .timeLeft(90)
@@ -119,8 +119,32 @@ class Game {
 
 
     func start() {
-    //create holes 2x cats
-    //position players initially
+        var numberOfExits = cats.count * 3 
+        var id: Subway.ID = 0
+
+        while numberOfExits >= 1 {
+            let exitsForSubway = Int.random(in: 1...numberOfExits / 2)
+            var exits = [Hole]()
+            for _ in 0...exitsForSubway {
+                exits.append(
+                    Hole(position: .random) 
+                )
+            }
+                    
+            subways.append(Subway(id: id, exits: exits))
+
+            numberOfExits -= exitsForSubway
+            id += 1
+        }
+        
+
+        for player in players {
+            if let mouse = player as? Mouse {
+                mouse.subway = Int64.random(in: 0...id)
+            } else if player is Cat {
+                player.position = .random
+            }
+        }
     }
 
     func enterHole(_ id: Int64) {

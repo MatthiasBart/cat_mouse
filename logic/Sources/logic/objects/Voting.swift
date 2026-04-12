@@ -10,3 +10,9 @@ class VotingRound {
         self.votings = votings
     }
 }
+
+extension VotingRound: Encodable { 
+    func encode(to encoder: any Encoder) throws {
+        
+    }
+}
