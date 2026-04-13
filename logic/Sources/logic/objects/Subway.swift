@@ -1,17 +1,19 @@
 class Subway: Identifiable {
     let id: Int64
-    let exits: [Hole]
 
-    init(id: Int64, exits: [Hole] = []) {
+    init(id: Int64) {
         self.id = id
-        self.exits = exits
     }
 }
 
-class Hole: Positionable {
+class Exit: Positionable {
+    var id: Int64
     var position: Position
+    var subway: Subway
 
-    init(position: Position = .base) {
+    init(id: Int64, position: Position = .base, subway: Subway) {
+        self.id = id
         self.position = position
+        self.subway = subway
     }
 }

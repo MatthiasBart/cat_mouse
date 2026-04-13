@@ -18,12 +18,15 @@ enum GameError: Error {
     case gameAlreadyExists
     case playerNotExisting
     case playerHasUndefinedRole
+    case noHoleFoundForID
+    case noMouseFoundForID
 }
 
 
 class Game {
     var players: [any Player]
     var subways: [Subway]
+    var exits: [Exit]
     var votings: [Subway.ID:VotingRound]
 
     var cats: [Cat] { 
@@ -43,6 +46,7 @@ class Game {
     init() {
         players = []
         subways = []
+        exits = []
         votings = [:]
 
         gameLoop()
@@ -59,6 +63,18 @@ class Game {
                 sendGameState(for: player.id)
             }
         }
+    }
+
+    func addMouse(name: String) {
+        let mouse = Mouse()
+        mouse.name = name
+        self.players.append(mouse)
+    }
+
+    func addCat(name: String) {
+        let cat = Cat()
+        cat.name = name
+        self.players.append(cat)
     }
 
     func sendStopState() {}
@@ -119,21 +135,23 @@ class Game {
 
 
     func start() {
-        var numberOfExits = cats.count * 3 
+        let numberOfExits = Int64(cats.count * 3)
+        var numberOfExitsLeft = numberOfExits
         var id: Subway.ID = 0
 
-        while numberOfExits >= 1 {
-            let exitsForSubway = Int.random(in: 1...numberOfExits / 2)
-            var exits = [Hole]()
-            for _ in 0...exitsForSubway {
+        while numberOfExitsLeft >= 1 {
+            let exitsForSubway = Int64.random(in: 1...numberOfExitsLeft / 2)
+            let subway = Subway(id: id)
+
+            for exit_id in 0...exitsForSubway {
                 exits.append(
-                    Hole(position: .random) 
+                    Exit(id: Int64((id * numberOfExits) + exit_id), position: .random, subway: subway) // to have unique ids for each hole, id*numberOfExits is the offset for the subway, hole id is the offset for the hole in the subway
                 )
             }
                     
-            subways.append(Subway(id: id, exits: exits))
+            subways.append(subway)
 
-            numberOfExits -= exitsForSubway
+            numberOfExitsLeft -= exitsForSubway
             id += 1
         }
         
@@ -147,20 +165,44 @@ class Game {
         }
     }
 
-    func enterHole(_ id: Int64) {
-    // ceck if mouse
-    // check if near hole
-    // enter
+    func enter(exit: Int64, mouse: Int64) throws {
+        guard let exit = exits.first(where: { $0.id == exit }) else { 
+            throw GameError.noHoleFoundForID
+        }
+        guard let mouse = mice.first(where: { $0.id == mouse }) else {
+            throw GameError.noMouseFoundForID
+        }
+
+        if mouse.isNear(exit) {
+            mouse.subway = exit.subway.id
+        }
     }
 
-    func leaveHole(_ id: Int64) {
-        // leave through hole
+    func leave(exit: Int64, mouse: Int64) throws {
+        guard let exit = exits.first(where: { $0.id == exit }) else { 
+            throw GameError.noHoleFoundForID
+        }
+        guard let mouse = mice.first(where: { $0.id == mouse }) else {
+            throw GameError.noMouseFoundForID
+        }
+
+        if mouse.subway == exit.subway.id { 
+            mouse.subway = nil
+            mouse.position = exit.position
+        }
     }
 
-    func moved(_ id: Int64, _ direction: Direction) {
-        // check if move is valid (map boundaries)
-        // check if cat hits mouse (send caught)
-        // make move 
+    func move(player: Int64, _ direction: Direction) throws {
+        guard let player: (any Player) = cats.first(where: { $0.id == player }) ?? mice.first(where: { $0.id == player }) else {
+            throw GameError.playerNotExisting
+        }
+
+        let newPosition = direction
+                .newPosition(position: player.position)
+                .inRange()
+
+        player.position = newPosition
+        // check if cat hit mouse
     }
 }
 
@@ -172,6 +214,25 @@ enum Direction: Decodable {
     case down
     case left
     case right
+
+    func newPosition(position: Position) -> Position {
+        var position = position
+        let speed: Int64 = 20
+        switch self {
+            case .up: 
+                position.y = position.y + speed
+                return position
+            case .down: 
+                position.y = position.y - speed
+                return position
+            case .left: 
+                position.x = position.x - speed
+                return position
+            case .right:
+                position.x = position.x + speed
+                return position
+        }
+    }
 }
 
 class GameStateDTOBuilder {
