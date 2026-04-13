@@ -1,4 +1,4 @@
-struct Position {
+struct Position: Encodable {
     var x: Int64
     var y: Int64
 }

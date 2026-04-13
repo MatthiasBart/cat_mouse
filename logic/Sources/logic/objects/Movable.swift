@@ -1,4 +1,4 @@
-protocol Movable: AnyObject, Positionable { 
+protocol Movable: Positionable { 
     func move(to position: Position)
     func move(x: Int64, y: Int64)
 }

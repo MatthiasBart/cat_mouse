@@ -27,7 +27,7 @@ class Game {
     var players: [any Player]
     var subways: [Subway]
     var exits: [Exit]
-    var votings: [Subway.ID:VotingRound]
+    var votings: [Subway.ID: Voting]
 
     var cats: [Cat] { 
         players.compactMap {
@@ -97,38 +97,38 @@ class Game {
         }
 
         if let cat = player as? Cat {
-            return gameState(for: cat)
+            return try gameState(for: cat)
         } else if let mouse = player as? Mouse { 
-            return gameState(for: mouse)
+            return try gameState(for: mouse)
         } else {
             throw GameError.playerHasUndefinedRole
         }
     }
 
-    func gameState(for mouse: Mouse) -> Data {
+    func gameState(for mouse: Mouse) throws -> Data {
         if let subway = mouse.subway {
-            return GameStateDTOBuilder()
+            return try GameStateDTOBuilder()
                 .mice(mice.filter { $0.subway == subway })
-                .votes(.init(endTime: Date(), votings: [:]))
-                .player(mouse)
+                //.voting()
+                //.player(mouse)
                 .timeLeft(90)
                 .build()
         } else {
-            return GameStateDTOBuilder()
+            return try GameStateDTOBuilder()
                 .mice([])
                 .cats(cats)
-                .votes(.init(endTime: Date(), votings: [:]))
-                .player(mouse)
+                //.voting()
+                //.player(mouse)
                 .timeLeft(90)
                 .build()
         }
     }
 
-    func gameState(for cat: Cat) -> Data {
-        return GameStateDTOBuilder()
+    func gameState(for cat: Cat) throws -> Data {
+        return try GameStateDTOBuilder()
             .mice([])
             .cats(cats)
-            .player(cat)
+            //.player(cat)
             .timeLeft(90)
             .build()
     }
@@ -239,34 +239,39 @@ class GameStateDTOBuilder {
     private var dto = GameStateDTO()
 
     func mice(_ mice: [Mouse]) -> Self {
+        dto.mice = mice
         return self
     }
 
     func cats(_ cats: [Cat]) -> Self {
+        dto.cats = cats
         return self
     }
 
-    func player(_ player: any Player) -> Self {
+    func player(_ player: PlayerDTO) -> Self {
+        dto.player = player
         return self
     }
 
-    func votes(_ votes: VotingRound) -> Self {
+    func voting(_ voting: Voting) -> Self {
+        dto.activeVote = voting
         return self
     }
 
     func timeLeft(_ time: TimeInterval) -> Self { 
+        dto.timeLeft = Int64(time)
         return self
     }
 
-    func build() -> Data {
-        return Data()
+    func build() throws -> Data {
+        try JSONEncoder().encode(dto)
     }
 }
 
 struct GameStateDTO: Encodable { 
-// votings
-// cats
-// mice
-// playerInfo
-// timeleft in game
+    var timeLeft: Int64? = nil
+    var player: PlayerDTO? = nil
+    var mice: [Mouse] = []
+    var cats: [Cat] = []
+    var activeVote: Voting? = nil
 }
