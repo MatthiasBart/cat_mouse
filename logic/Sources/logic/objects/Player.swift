@@ -25,4 +25,24 @@ class PlayerDTO: Player {
                 self.subway = subway
                 self.position = position
         }
+
+        convenience init(cat: Cat) { 
+            self.init(
+            id: cat.id,
+            name: cat.name,
+            role: "cat",
+            subway: nil,
+            position: cat.position
+        )
+        }
+
+        convenience init(mouse: Mouse) { 
+            self.init(
+            id: mouse.id,
+            name: mouse.name,
+            role: "mouse",
+            subway: mouse.subway,
+            position: mouse.position
+        )
+        }
 }
