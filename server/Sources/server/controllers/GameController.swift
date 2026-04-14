@@ -32,9 +32,9 @@ struct GameController: RouteCollection {
 extension GameController: GameControllerProtocol {
   // TODO: prevent player from joining/creating multiple games with same session
   func createGame(req: Request) async throws -> Response {
-    let (_, code) = await manager.createGame()
+    let key = await manager.createGame()
 
-    let session = PlayerSession(req: req, code: code)
+    let session = PlayerSession(req: req, code: key)
     session.save()
 
     req.logger.info("Player \(session.playerName) created game \(session.code)")
@@ -44,10 +44,6 @@ extension GameController: GameControllerProtocol {
   func joinGame(req: Request) async throws -> Response {
     guard let code = req.parameters.get(PlayerSession.codeKey), !code.isEmpty else {
       throw Abort(.badRequest, reason: "Game code is missing")
-    }
-
-    guard await manager.gameExists(code: code) else {
-      throw Abort(.notFound, reason: "Game code does not exists")
     }
 
     let session = PlayerSession(req: req, code: code)

@@ -1,23 +1,5 @@
 import Foundation
 
-class Controller {
-    private var games: [String: Game] = [:]
-
-    init() {}
-
-    func createGame(with name: String) throws {
-        if games[name] != nil {
-            throw GameError.gameAlreadyExists
-        }
-
-        games[name] = Game()
-    }
-
-    func getGame(with name: String) -> Game? {
-        games[name]
-    }
-}
-
 enum GameError: Error {
     case gameAlreadyExists
     case playerNotExisting

@@ -1,13 +1,19 @@
 import Vapor
+import Logic
 
 actor GamesService {
-  private var codes: Set<String> = []
+  private var games: [String: Game] = [:]
 
-  func createGame() -> (Bool, String) {
-    codes.insert(UUID().uuidString)
+  func createGame() -> String {
+      let uuid = UUID().uuidString
+      games[uuid] = Game()
+      return uuid
   }
 
-  func gameExists(code: String) -> Bool {
-    codes.contains(code)
+  func getGame(key: String) throws -> Game {
+      guard let game = games[key] else { 
+          throw GameError.invalidData
+      }
+      return game
   }
 }
