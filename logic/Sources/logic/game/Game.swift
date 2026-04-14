@@ -26,7 +26,7 @@ enum GameError: Error {
     case noMouseFoundForID
 }
 
-class Game {
+public class Game {
     var players: [any Player]
     var subways: [Subway]
     var exits: [Exit]
@@ -44,28 +44,26 @@ class Game {
         }
     }
 
-    private(set) var stop: Bool = false
-
-    init() {
+    public init() {
         players = []
         subways = []
         exits = []
         votings = [:]
     }
 
-    func addMouse(name: String) {
+    public func addMouse(name: String) {
         let mouse = Mouse()
         mouse.name = name
         self.players.append(mouse)
     }
 
-    func addCat(name: String) {
+    public func addCat(name: String) {
         let cat = Cat()
         cat.name = name
         self.players.append(cat)
     }
 
-    func startGame() {
+    public func startGame() {
         createSubways()
 
         positionPlayers()
@@ -105,7 +103,7 @@ class Game {
     }
 
 
-    func enter(exit: Int64, mouse: Int64) throws {
+    public func enter(exit: Int64, mouse: Int64) throws {
         guard let exit = exits.first(where: { $0.id == exit }) else { 
             throw GameError.noHoleFoundForID
         }
@@ -118,7 +116,7 @@ class Game {
         }
     }
 
-    func leave(exit: Int64, mouse: Int64) throws {
+    public func leave(exit: Int64, mouse: Int64) throws {
         guard let exit = exits.first(where: { $0.id == exit }) else { 
             throw GameError.noHoleFoundForID
         }
@@ -132,7 +130,7 @@ class Game {
         }
     }
 
-    func move(player: Int64, _ direction: Direction) throws {
+    public func move(player: Int64, _ direction: Direction) throws {
         guard let player: (any Player) = cats.first(where: { $0.id == player }) ?? mice.first(where: { $0.id == player }) else {
             throw GameError.playerNotExisting
         }

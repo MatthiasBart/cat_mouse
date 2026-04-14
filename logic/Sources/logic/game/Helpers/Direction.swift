@@ -1,4 +1,4 @@
-enum Direction: Decodable {
+public enum Direction: Decodable {
     case up
     case down
     case left

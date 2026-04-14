@@ -3,7 +3,7 @@ import Foundation
 struct GameStateCalculator {
     let game: Game 
     
-    func computeGameState(for id: Int64) throws -> Data {
+    public func computeGameState(for id: Int64) throws -> Data {
         guard let player = game.players.first(where: { $0.id == id } ) else {
             throw GameError.playerNotExisting
         }
