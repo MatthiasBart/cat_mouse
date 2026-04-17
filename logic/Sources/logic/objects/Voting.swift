@@ -1,12 +1,12 @@
 import Foundation
 
 class Voting {
-    typealias Votes = [Subway.ID: [Mouse]]
+    typealias Votes = [Mouse.ID: Subway.ID]
     let endTime: Date
-    let votes: Votes
+    var votes: Votes
     let manager: Mouse
 
-    init(endTime: Date = Date(), votes: Votes, manager: Mouse) {
+    init(endTime: Date = Date(), votes: Votes = [:], manager: Mouse) {
         self.endTime = endTime
         self.votes = votes
         self.manager = manager
@@ -28,11 +28,25 @@ extension Voting: Encodable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(Date().distance(to: endTime), forKey: .timeLeft)
 
-        var votes: [VotesDTO] = []
+        var voteDtos: [VotesDTO] = []
+        var voteCounts: [Subway.ID: Int64] = [:]
+
         for vote in self.votes {
-            votes.append(.init(subwayId: vote.key, votes: Int64(votes.count)))
+            voteCounts[vote.value] = (voteCounts[vote.value] ?? 0) + 1    
         }
 
-        try container.encode(votes, forKey: .votes)
+        for voteCount in voteCounts {
+            voteDtos.append(.init(subwayId: voteCount.key, votes: voteCount.value))
+        }
+
+        try container.encode(voteDtos, forKey: .votes)
+    }
+}
+
+extension Voting {
+    static let duration: TimeInterval = 45
+
+    func isRunOut() -> Bool {
+        self.endTime < Date()
     }
 }

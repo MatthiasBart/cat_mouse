@@ -6,6 +6,10 @@ enum GameError: Error {
     case playerHasUndefinedRole
     case noHoleFoundForID
     case noMouseFoundForID
+    case votingAlreadyExists
+    case votingNotExists
+    case votingNotValid
+    case mouseNotInSubway
 }
 
 public class Game {
@@ -43,6 +47,43 @@ public class Game {
         let cat = Cat()
         cat.name = name
         self.players.append(cat)
+    }
+
+    public func startVoting(subway: Int64, manager: Int64) throws {
+        if let voting = votings[subway] { 
+            if !voting.isRunOut() {
+                throw GameError.votingAlreadyExists
+            }
+        }   
+
+        guard let mouse = mice.first(where: { $0.id == manager }) else { 
+            throw GameError.noMouseFoundForID
+        }
+        
+        votings[subway] = Voting(
+            endTime: Date() + Voting.duration,
+            manager: mouse
+        )
+    }
+
+    public func vote(subway: Int64, mouse: Int64) throws { 
+        guard let mouse = mice.first(where: { $0.id == mouse }) else {
+            throw GameError.noMouseFoundForID
+        }
+
+        if mouse.subway == nil {
+            throw GameError.mouseNotInSubway
+        }
+
+        guard let voting = votings[mouse.subway!] else { 
+            throw GameError.votingNotExists
+        }
+
+        if voting.isRunOut() { 
+            throw GameError.votingNotValid
+        }
+
+        voting.votes[mouse.id] = subway
     }
 
     public func startGame() {
