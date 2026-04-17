@@ -23,14 +23,14 @@ struct GameStateCalculator {
                 .mice(game.mice.filter { $0.subway == subway })
                 .voting(game.votings[subway])
                 .player(mouse)
-                .timeLeft(90)
+                .timeLeft((game.endTime ?? Date()).distance(to: Date()))
                 .build()
         } else {
             return try GameStateDTOBuilder()
-                .mice([])
+                .mice(game.mice.filter { $0.subway == nil })
                 .cats(game.cats)
                 .player(mouse)
-                .timeLeft(90)
+                .timeLeft((game.endTime ?? Date()).distance(to: Date()))
                 .build()
         }
     }
@@ -40,7 +40,7 @@ struct GameStateCalculator {
             .mice(game.mice.filter { $0.subway == nil })
             .cats(game.cats)
             .player(cat)
-            .timeLeft(90)
+            .timeLeft((game.endTime ?? Date()).distance(to: Date()))
             .build()
     }
 }

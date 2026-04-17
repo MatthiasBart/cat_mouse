@@ -18,6 +18,8 @@ public class Game {
     var exits: [Exit]
     var votings: [Subway.ID: Voting]
 
+    var endTime: Date? = nil
+
     var cats: [Cat] { 
         players.compactMap {
             $0 as? Cat 
@@ -29,6 +31,8 @@ public class Game {
             $0 as? Mouse
         }
     }
+
+    static let duration: TimeInterval = 300
 
     public init() {
         players = []
@@ -90,6 +94,8 @@ public class Game {
         createSubways()
 
         positionPlayers()
+
+        self.endTime = Date() + Game.duration
     }
 
     func createSubways() { 
