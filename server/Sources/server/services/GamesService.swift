@@ -7,10 +7,25 @@ actor GamesService {
     let role: Role
   }
 
+  struct RoomPlayer {
+    let playerId: Int64
+    let playerName: String
+    let role: Role
+    let isCreator: Bool
+    let isComputer: Bool
+  }
+
+  struct GameMetaData {
+    let code: String
+    let started: Bool
+    let players: [RoomPlayer]
+  }
+
   private struct GameEntry {
     let game: Game
     let creatorPlayerId: Int64
     var started: Bool
+    var players: [Int64: RoomPlayer]
   }
 
   private var games: [String: Game] = [:]
@@ -25,8 +40,21 @@ actor GamesService {
     let playerId = registerPlayer(game: game, playerName: playerName, role: role)
     let registration = PlayerRegistration(playerId: playerId, role: role)
 
-    let entry = GameEntry(game: game, creatorPlayerId: playerId, started: false)
-    gameEntries[code] = entry
+    let creator = RoomPlayer(
+      playerId: playerId,
+      playerName: playerName,
+      role: role,
+      isCreator: true,
+      isComputer: false
+    )
+
+    gameEntries[code] = GameEntry(
+      game: game,
+      creatorPlayerId: playerId,
+      started: false,
+      players: [playerId: creator]
+    )
+
     games[code] = game
 
     return (code, registration)
@@ -44,8 +72,15 @@ actor GamesService {
     let playerId = registerPlayer(game: entry.game, playerName: playerName, role: role)
     let registration = PlayerRegistration(playerId: playerId, role: role)
 
-    entry = GameEntry(
-      game: entry.game, creatorPlayerId: entry.creatorPlayerId, started: entry.started)
+    let roomPlayer = RoomPlayer(
+      playerId: playerId,
+      playerName: playerName,
+      role: role,
+      isCreator: false,
+      isComputer: false
+    )
+    entry.players[playerId] = roomPlayer
+
     gameEntries[code] = entry
 
     return registration
@@ -79,6 +114,30 @@ actor GamesService {
       throw GameError.gameNotFound
     }
     return entry.game
+  }
+
+  func getGameMetaData(code: String) throws -> GameMetaData {
+    guard let entry = gameEntries[code] else {
+      throw GameError.gameNotFound
+    }
+
+    let players = entry.players.values.sorted { lhs, rhs in
+      lhs.playerId < rhs.playerId
+    }
+
+    return GameMetaData(code: code, started: entry.started, players: players)
+  }
+
+  func getRoomPlayer(code: String, playerId: Int64) throws -> RoomPlayer {
+    guard let entry = gameEntries[code] else {
+      throw GameError.gameNotFound
+    }
+
+    guard let player = entry.players[playerId] else {
+      throw GameError.invalidData
+    }
+
+    return player
   }
 
   private func registerPlayer(game: Game, playerName: String, role: Role) -> Int64 {

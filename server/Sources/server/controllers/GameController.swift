@@ -18,7 +18,13 @@ protocol GameControllerProtocol {
 }
 
 struct GameController: RouteCollection {
-  private let manager: GamesService = GamesService()
+  private let manager: GamesService
+  private let clientsService: ClientsService
+
+  init(gamesService: GamesService, clientsService: ClientsService) {
+    self.manager = gamesService
+    self.clientsService = clientsService
+  }
 
   private struct PlayerRequest: Content {
     let role: String?
@@ -81,6 +87,24 @@ extension GameController: GameControllerProtocol {
     session.save()
 
     req.logger.info("Player \(session.playerName) joined game \(session.code)")
+
+    do {
+      let joinedPlayer = try await manager.getRoomPlayer(code: code, playerId: registration.playerId)
+      let payload = PlayerJoined(
+        code: code,
+        player: ConnectionInit.PlayerInfo(
+          playerId: joinedPlayer.playerId,
+          playerName: joinedPlayer.playerName,
+          role: joinedPlayer.role,
+          isCreator: joinedPlayer.isCreator,
+          isComputer: joinedPlayer.isComputer
+        )
+      )
+      await clientsService.broadcast(message: payload, in: code)
+    } catch {
+      req.logger.warning("Failed to broadcast PLAYER_JOINED for code \(code): \(error)")
+    }
+
     return try await session.output.encodeResponse(status: .ok, for: req)
   }
 
@@ -104,10 +128,6 @@ extension GameController: GameControllerProtocol {
     }
 
     return Response(status: .noContent)
-  }
-
-  private func joinUrl(from code: String) -> String {
-    "ws://localhost:8080/\(code)/ws"  // TODO: use real server url
   }
 
   private func parsePlayerName(from rawName: String?) -> String {

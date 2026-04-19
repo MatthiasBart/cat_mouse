@@ -12,6 +12,8 @@ Both WS routes are protected by backend session middleware:
 
 | Type           | Direction        | Link |
 | -------------- | ---------------- | ---- |
+| `CONNECTION_INIT` | Server -> Client |      |
+| `PLAYER_JOINED` | Server -> Client |      |
 | `GAME_INIT`    | Server -> Client |      |
 | `GAME_UPDATE`  | Server -> Client |      |
 | `CAUGHT`       | Server -> Client |      |
@@ -26,6 +28,51 @@ Both WS routes are protected by backend session middleware:
 | `ERROR`        | Server -> Client |      |
 
 ### Server -> Clients
+
+#### Connection Init
+
+Sent once right after WS connect.
+
+- `started=false` -> game has not started yet, client should stay in room/waiting UI.
+- `started=true` -> game already started, server also sends `GAME_INIT`.
+
+```json
+{
+  "type": "CONNECTION_INIT",
+  "code": "A3E2E18E-332B-49D4-B00C-FAE4D14C56D0",
+  "started": false,
+  "currentPlayerId": 1,
+  "players": [
+    {
+      "playerId": 1,
+      "playerName": "tom123",
+      "role": "CAT",
+      "isCreator": true,
+      "isComputer": false
+    }
+  ]
+}
+```
+
+#### Player Joined
+
+Broadcast to all connected clients in the same game when a player joins via REST.
+
+```json
+{
+  "type": "PLAYER_JOINED",
+  "code": "A3E2E18E-332B-49D4-B00C-FAE4D14C56D0",
+  "player": {
+    "playerId": 2,
+    "playerName": "jerry123",
+    "role": "MOUSE",
+    "isCreator": false,
+    "isComputer": false
+  }
+}
+```
+
+`PLAYER_LEFT` is not implemented (yet).
 
 #### Game update (TBD)
 
