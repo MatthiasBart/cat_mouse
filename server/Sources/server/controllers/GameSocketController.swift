@@ -21,7 +21,13 @@ struct GameSocketController: RouteCollection {
   }
 
   func boot(routes: any RoutesBuilder) throws {
-    routes.webSocket("games", "ws") { req, ws in
+    let protectedRoutes = routes.grouped(PlayerSessionGuardMiddleware())
+
+    protectedRoutes.webSocket("games", "ws") { req, ws in
+      self.connect(req: req, ws: ws)
+    }
+
+    protectedRoutes.webSocket("games", ":code", "ws") { req, ws in
       self.connect(req: req, ws: ws)
     }
   }
@@ -30,6 +36,7 @@ struct GameSocketController: RouteCollection {
 extension GameSocketController: GameSocketControllerProtocol {
   func connect(req: Request, ws: WebSocket) {
     guard let session = PlayerSession(req: req) else {
+      req.logger.info("Connection rejected: Missing or invalid session.")
       ws.send("Connection rejected: Missing or invalid session.")
       _ = ws.close(code: .policyViolation)
       return

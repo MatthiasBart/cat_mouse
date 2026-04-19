@@ -20,6 +20,11 @@ protocol GameControllerProtocol {
 struct GameController: RouteCollection {
   private let manager: GamesService = GamesService()
 
+  private struct PlayerRequest: Content {
+    let role: String?
+    let playerName: String?
+  }
+
   func boot(routes: any RoutesBuilder) throws {
     let gameRoute = routes.grouped("games")
     gameRoute.post(use: self.createGame)
@@ -30,11 +35,20 @@ struct GameController: RouteCollection {
 
 // MARK: Implementation
 extension GameController: GameControllerProtocol {
-  // TODO: prevent player from joining/creating multiple games with same session
   func createGame(req: Request) async throws -> Response {
-    let key = await manager.createGame()
+    let playerRequest = try req.query.decode(PlayerRequest.self)
+    let role = try parseRole(from: playerRequest.role)
+    let playerName = parsePlayerName(from: playerRequest.playerName)
 
-    let session = PlayerSession(req: req, code: key)
+    let (key, registration) = await manager.createGame(playerName: playerName, role: role)
+
+    let session = PlayerSession(
+      req: req,
+      playerId: registration.playerId,
+      role: registration.role,
+      playerName: playerName,
+      code: key
+    )
     session.save()
 
     req.logger.info("Player \(session.playerName) created game \(session.code)")
@@ -46,7 +60,24 @@ extension GameController: GameControllerProtocol {
       throw Abort(.badRequest, reason: "Game code is missing")
     }
 
-    let session = PlayerSession(req: req, code: code)
+    let playerRequest = try req.query.decode(PlayerRequest.self)
+    let role = try parseRole(from: playerRequest.role)
+    let playerName = parsePlayerName(from: playerRequest.playerName)
+
+    let registration: GamesService.PlayerRegistration
+    do {
+      registration = try await manager.joinGame(code: code, playerName: playerName, role: role)
+    } catch let error as GameError {
+      throw mapToAbort(error)
+    }
+
+    let session = PlayerSession(
+      req: req,
+      playerId: registration.playerId,
+      role: registration.role,
+      playerName: playerName,
+      code: code
+    )
     session.save()
 
     req.logger.info("Player \(session.playerName) joined game \(session.code)")
@@ -54,10 +85,60 @@ extension GameController: GameControllerProtocol {
   }
 
   func updateGame(req: Request) async throws -> Response {
-    throw Abort(.notImplemented)  // Use Abort to throw HTTP errors cleanly
+    guard let code = req.parameters.get(PlayerSession.codeKey), !code.isEmpty else {
+      throw Abort(.badRequest, reason: "Game code is missing")
+    }
+
+    guard let session = PlayerSession(req: req) else {
+      throw Abort(.unauthorized, reason: "Missing or invalid session")
+    }
+
+    guard session.code == code else {
+      throw Abort(.forbidden, reason: "Session does not belong to this game")
+    }
+
+    do {
+      try await manager.startGame(code: code, requesterPlayerId: session.playerId)
+    } catch let error as GameError {
+      throw mapToAbort(error)
+    }
+
+    return Response(status: .noContent)
   }
 
   private func joinUrl(from code: String) -> String {
     "ws://localhost:8080/\(code)/ws"  // TODO: use real server url
+  }
+
+  private func parsePlayerName(from rawName: String?) -> String {
+    let trimmed = rawName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    if trimmed.isEmpty {
+      return "Anonymous"
+    }
+    return trimmed
+  }
+
+  private func parseRole(from role: String?) throws -> Role {
+    guard let parsedRole = Role.parse(apiValue: role) else {
+      throw Abort(.badRequest, reason: "Missing or invalid role. Use 'cat' or 'mouse'.")
+    }
+    return parsedRole
+  }
+
+  private func mapToAbort(_ error: GameError) -> Abort {
+    switch error {
+    case .gameNotFound:
+      return Abort(.notFound, reason: error.localizedDescription)
+    case .gameAlreadyStarted:
+      return Abort(.conflict, reason: error.localizedDescription)
+    case .forbidden:
+      return Abort(.forbidden, reason: error.localizedDescription)
+    case .gameNotReady:
+      return Abort(.conflict, reason: error.localizedDescription)
+    case .invalidRole:
+      return Abort(.badRequest, reason: error.localizedDescription)
+    default:
+      return Abort(.badRequest, reason: error.localizedDescription)
+    }
   }
 }
