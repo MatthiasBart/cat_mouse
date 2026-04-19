@@ -35,6 +35,14 @@ export function GameForm() {
     setError(null);
 
     if (action === 'join') {
+      try {
+        const player = await api.joinGame(trimmedCode, role, trimmedName);
+        console.debug(player);
+        location.route(`/${encodeURIComponent(player.code)}`);
+      } catch (error) {
+        console.error(error);
+        setError('Failed to join game. Check logs for details.');
+      }
       return;
     }
 

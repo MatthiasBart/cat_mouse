@@ -1,4 +1,4 @@
-import type { Player, Role, SessionContext } from "../../types/player";
+import type { Player, Role } from "../../types/player";
 
 const API_BASE_URL = "http://localhost:8080/games";
 
