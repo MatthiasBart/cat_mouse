@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 
-import "./app.css";
-import type { Game, Cat, Mouse } from "./types";
-import { renderComponents, renderGameField } from "./views/renderGameField";
-import { renderButton } from "./views/renderMenus";
+import type { Game, Cat, Mouse } from "../../types";
+import { renderComponents, renderGameField } from "../../views/renderGameField";
+import { renderButton } from "../../views/renderMenus";
 
 //const wss = new WebSocket.Server({ port: 8080 });
 //const websocket = new WebSocket("ws://localhost:8080/games/ws");
@@ -35,7 +34,7 @@ async function renderTunnels(tunnels: Tunnel[]) {
   
 }*/
 
-export function App() {
+export function Game() {
   //const [count, setCount] = useState(0);
 
   //const initialState: Game = { game: null };
@@ -230,8 +229,6 @@ export function App() {
 
   return (
     <>
-      <section id="center">
-        <h1>Cat & Mouse</h1>
         {gameCode && renderButton("Exit", exitGame)}
         {gameState && gameCode && renderGameField(gameState, renderComponents)}
         {!gameCode &&
@@ -239,13 +236,6 @@ export function App() {
             const gameCode = await joinGame(await createGame());
             setGameCode(gameCode);
           })}
-      </section>
-
-      <section id="next-steps">
-        <div id="footer">
-          <p>PPL - Group X</p>
-        </div>
-      </section>
     </>
   );
 }
