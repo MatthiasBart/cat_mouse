@@ -1,0 +1,28 @@
+.game-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5em;
+  width: min(450px, 90vw);
+  padding: 1em;
+  border: 1px solid var(--border);
+  border-radius: 0.5em;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.game-form * {
+  font: inherit;
+}
+
+.game-form label {
+  text-align: left;
+  font-weight: bold;
+}
+
+.game-form input,
+.game-form select,
+button {
+  border: 1px solid var(--border);
+  border-radius: 0.5em;
+  padding: 0.25rem 0.5em;
+}
