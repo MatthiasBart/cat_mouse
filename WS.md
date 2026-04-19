@@ -1,21 +1,28 @@
 # WebSocket API Spec
 
-Clients can connect `/games/ws` to with a valid session (see [REST specs](./REST.md)).
+Clients can connect to `/games/{code}/ws` with a valid session (see [REST specs](./REST.md)).
 
-## Messages (WIP)
+Both WS routes are protected by backend session middleware:
+
+- Missing/invalid session -> rejected (`401 Unauthorized`)
+- `/games/{code}/ws` with code not matching session game code -> rejected (`403 Forbidden`)
+
 
 ### Overview
 
 | Type           | Direction        | Link |
 | -------------- | ---------------- | ---- |
+| `GAME_INIT`    | Server -> Client |      |
 | `GAME_UPDATE`  | Server -> Client |      |
-| `GAME_OVER`    | Server -> Client |      |
+| `CAUGHT`       | Server -> Client |      |
+| `VOTE_RESULT`  | Server -> Client |      |
+| `GAME_ENDED`   | Server -> Client |      |
 | `MOVE`         | Client -> Server |      |
 | `LEAVE_SUBWAY` | Client -> Server |      |
 | `ENTER_SUBWAY` | Client -> Server |      |
-| `BEGIN_VOTE`   | Client -> Server |      |
-| `END_VOTE`     | Client -> Server |      |
-| `VOTE`         | Client -> Server |      |
+| `START_VOTE`   | Client -> Server |      |
+| `LEAVE_GAME`   | Client -> Server |      |
+| `VOTE_DECISION` | Client -> Server |      |
 | `ERROR`        | Server -> Client |      |
 
 ### Server -> Clients
