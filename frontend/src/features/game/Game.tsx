@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import type { GameUpdateMessage } from "../room/types";
 
-import type { Game, Cat, Mouse } from "../../types";
+import type { Game } from "../../types";
 import { renderComponents, renderGameField } from "../../views/renderGameField";
-import { renderButton } from "../../views/renderMenus";
 
 //const wss = new WebSocket.Server({ port: 8080 });
 //const websocket = new WebSocket("ws://localhost:8080/games/ws");
@@ -34,12 +34,16 @@ async function renderTunnels(tunnels: Tunnel[]) {
   
 }*/
 
-export function Game() {
+interface GameProps {
+  gameCode: string;
+  gameState: GameUpdateMessage | null;
+}
+
+export function Game({gameCode, gameState}: GameProps) {
   //const [count, setCount] = useState(0);
 
   //const initialState: Game = { game: null };
-  const [gameCode, setGameCode] = useState<string | null>(null);
-  const [gameState, setGameState] = useState<Game>({
+  const [localGameState, setGameState] = useState<Game>({ // TODO: replace with from server
     player: { type: "cat", name: "todo", x: 100, y: 100 },
     mice: [
       { x: 10, y: 10 },
@@ -64,73 +68,17 @@ export function Game() {
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  const joinGame = async (gameCode: string): Promise<string> => {
-    console.log("Joining game " + gameCode);
-    const response = await fetch(
-      `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}`, // todo add role:
-      // joinGame and createGame also set the playerId, see REST.md
-      {
-        method: "POST",
-        credentials: "include",
-      },
-    );
-    //console.log(response);
-    console.log("opening websocket");
-    const socket = new WebSocket("ws://localhost:8080/games/ws");
-
-    socket.onopen = () => console.log("Connected to WebSocket server");
-    socket.onmessage = (event: MessageEvent) => {
-      console.log("onmessage:", event.data);
-      // setGameState(...)
-    };
-    socket.onclose = () => console.log("Disconnected from WebSocket server");
-    socket.onerror = (err) => console.error("WebSocket error:", err);
-    wsRef.current = socket;
-    wsRef.current = socket;
-    return gameCode;
-  };
-  const exitGame = () => {
-    wsRef.current?.close();
-    wsRef.current = null;
-    setGameCode(null);
-  };
 
   useEffect(() => {}, [wsRef.current]);
-  useEffect(() => {}, [gameCode, gameState]);
+  // TODO: Instead of local mock state + local prediction,
+  // map serverGameState into the Game view model and call setGameState(mappedState)
+  // so rendering is driven by authoritative server updates.
 
   useEffect(() => {
     return () => wsRef.current?.close();
   }, []);
 
-  const createGame = async (): Promise<string> => {
-    // todo: it also auto-joins that game
-    const res = await fetch("http://localhost:8080/games", {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) throw new Error("Failed to create game");
-    const data = await res.json(); // { role, playerName, code }
-    console.log("gamecode. " + data.code);
-    return data.code;
-  };
 
-  // return UI with Join button calling joinGame
-
-  // https://medium.com/@chaman388/websockets-in-reactjs-a-practical-guide-with-real-world-examples-2efe483ee150
-
-  /*const sendMessage = () => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(input);
-      setInput("");
-    }
-  };*/
-
-  const onMove = (ws: WebSocket | null) => {
-    // according to claude, the client renders his own prediction but the server validates
-
-    if (!ws) return;
-    ws.send(JSON.stringify({ type: "MOVE", test: "test" }));
-  };
   useEffect(() => {
     if (!gameCode) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -144,14 +92,14 @@ export function Game() {
       }
       console.log("onKeyDown " + e.key);
       e.preventDefault();
-      const ws = wsRef.current;
+      /*const ws = wsRef.current;
       if (!ws || ws.readyState !== WebSocket.OPEN) return;
       ws.send(
         JSON.stringify({
           type: "MOVE",
           test: e.key,
         }),
-      );
+      );*/
 
       // Change the player's x or y coordinates depending on the key press
       setGameState((prevGameState: Game) => {
@@ -229,13 +177,7 @@ export function Game() {
 
   return (
     <>
-        {gameCode && renderButton("Exit", exitGame)}
-        {gameState && gameCode && renderGameField(gameState, renderComponents)}
-        {!gameCode &&
-          renderButton("Create Game", async () => {
-            const gameCode = await joinGame(await createGame());
-            setGameCode(gameCode);
-          })}
+        {localGameState && renderGameField(localGameState, renderComponents)}
     </>
   );
 }

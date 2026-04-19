@@ -10,7 +10,7 @@ export function GameForm() {
   const location = useLocation();
 
   const [name, setName] = useState('');
-  const [role, setRole] = useState<Role>('MOUSE');
+  const [role, setRole] = useState<Role>('');
   const [joinCode, setJoinCode] = useState('');
 
   const [action, setAction] = useState<Action>('create');
@@ -23,7 +23,12 @@ export function GameForm() {
     const trimmedCode = joinCode.trim();
 
     if (!trimmedName) {
-      setError('Name is required.');
+      setError('Please enter a name.');
+      return;
+    }
+
+    if (!role) {
+      setError('Please choose a role.');
       return;
     }
 
@@ -77,6 +82,7 @@ export function GameForm() {
           onChange={(e) =>
             setRole((e.target as HTMLSelectElement).value as Role)
           }>
+          <option value="">Select a role</option>
           <option value="CAT">Cat</option>
           <option value="MOUSE">Mouse</option>
         </select>

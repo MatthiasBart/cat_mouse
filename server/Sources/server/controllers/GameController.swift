@@ -15,6 +15,9 @@ protocol GameControllerProtocol {
 
   /// Update game state (start, end early, ...)
   func updateGame(req: Request) async throws -> Response
+
+  /// Add an AI placeholder player (WIP)
+  func addAI(req: Request) async throws -> Response
 }
 
 struct GameController: RouteCollection {
@@ -35,6 +38,7 @@ struct GameController: RouteCollection {
     let gameRoute = routes.grouped("games")
     gameRoute.post(use: self.createGame)
     gameRoute.post(":code", "players", use: self.joinGame)
+    gameRoute.post(":code", "ai", use: self.addAI)
     gameRoute.patch(":code", use: self.updateGame)
   }
 }
@@ -127,6 +131,26 @@ extension GameController: GameControllerProtocol {
       throw mapToAbort(error)
     }
 
+    return Response(status: .noContent)
+  }
+
+  func addAI(req: Request) async throws -> Response {
+    guard let code = req.parameters.get(PlayerSession.codeKey), !code.isEmpty else {
+      throw Abort(.badRequest, reason: "Game code is missing")
+    }
+
+    guard let session = PlayerSession(req: req) else {
+      throw Abort(.unauthorized, reason: "Missing or invalid session")
+    }
+
+    guard session.code == code else {
+      throw Abort(.forbidden, reason: "Session does not belong to this game")
+    }
+
+    let playerRequest = try req.query.decode(PlayerRequest.self)
+    let role = try parseRole(from: playerRequest.role)
+
+    req.logger.notice("Add AI to game \(code) with role \(role.rawValue)")
     return Response(status: .noContent)
   }
 
