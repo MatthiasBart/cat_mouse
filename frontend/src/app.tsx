@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 
 import "./app.css";
-import type { Game, Cat, Mouse } from "./types";
+import type { Game, Cat, Mouse, Player, Role } from "./types";
 import { renderComponents, renderGameField } from "./views/renderGameField";
 import { renderButton } from "./views/renderMenus";
 
@@ -40,6 +40,7 @@ export function App() {
 
   //const initialState: Game = { game: null };
   const [gameCode, setGameCode] = useState<string | null>(null);
+  const [gameCodeInput, setGameCodeInput] = useState("");
   const [gameState, setGameState] = useState<Game>({
     player: { type: "cat", name: "todo", x: 100, y: 100 },
     mice: [
@@ -65,10 +66,10 @@ export function App() {
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  const joinGame = async (gameCode: string): Promise<string> => {
+  const joinGame = async (gameCode: string, role: Role): Promise<string> => {
     console.log("Joining game " + gameCode);
     const response = await fetch(
-      `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}`, // todo add role:
+      `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}?role=${role}`, // todo add role:
       // joinGame and createGame also set the playerId, see REST.md
       {
         method: "POST",
@@ -237,6 +238,23 @@ export function App() {
         {!gameCode &&
           renderButton("Create Game", async () => {
             const gameCode = await joinGame(await createGame());
+            setGameCode(gameCode);
+          })}
+        {!gameCode && (
+          <input
+            type="text"
+            placeholder="Enter Game Code"
+            value={gameCodeInput}
+            onInput={(e) =>
+              setGameCodeInput((e.target as HTMLInputElement).value)
+            }
+            style={{ margin: "8px", padding: "4px", fontSize: "1rem" }}
+          />
+        )}
+
+        {!gameCode &&
+          renderButton("Join Game", async () => {
+            const gameCode = await joinGame(gameCodeInput);
             setGameCode(gameCode);
           })}
       </section>

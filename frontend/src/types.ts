@@ -9,9 +9,10 @@ interface Positionable {
   x: number;
   y: number;
 }
+export type Role = "cat" | "mouse";
 export interface Player extends Positionable {
   name: string;
-  type: "cat" | "mouse";
+  role: Role;
 }
 export interface Subway extends Positionable {}
 export interface Cat extends Positionable {}

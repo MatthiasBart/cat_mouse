@@ -90,7 +90,7 @@ const renderPlayer = (player: Player): JSX.Element => {
       }}
     >
       <img
-        src={player.type === "cat" ? "cat.png" : "./mouse.png"}
+        src={player.role === "cat" ? "cat.png" : "./mouse.png"}
         alt="player"
         style={{ width: 150, height: 150 }}
       />
