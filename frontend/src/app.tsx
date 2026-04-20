@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { GameUpdateMessage } from "../room/types";
 
-import type { Game } from "../../types";
-import { renderComponents, renderGameField } from "../../views/renderGameField";
+import "./app.css";
+import type { Game, Cat, Mouse } from "./types";
+import { renderComponents, renderGameField } from "./views/renderGameField";
+import { renderButton } from "./views/renderMenus";
 
 //const wss = new WebSocket.Server({ port: 8080 });
 //const websocket = new WebSocket("ws://localhost:8080/games/ws");
@@ -34,12 +36,7 @@ async function renderTunnels(tunnels: Tunnel[]) {
   
 }*/
 
-interface GameProps {
-  gameCode: string;
-  gameState: GameUpdateMessage | null;
-}
-
-export function Game({gameCode, gameState}: GameProps) {
+export function App() {
   //const [count, setCount] = useState(0);
 
   //const initialState: Game = { game: null };
@@ -177,7 +174,22 @@ export function Game({gameCode, gameState}: GameProps) {
 
   return (
     <>
-        {localGameState && renderGameField(localGameState, renderComponents)}
+      <section id="center">
+        <h1>Cat & Mouse</h1>
+        {gameCode && renderButton("Exit", exitGame)}
+        {gameState && gameCode && renderGameField(gameState, renderComponents)}
+        {!gameCode &&
+          renderButton("Create Game", async () => {
+            const gameCode = await joinGame(await createGame());
+            setGameCode(gameCode);
+          })}
+      </section>
+
+      <section id="next-steps">
+        <div id="footer">
+          <p>PPL - Group X</p>
+        </div>
+      </section>
     </>
   );
 }
