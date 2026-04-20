@@ -103,7 +103,7 @@ actor GamesService {
       throw GameError.gameNotReady
     }
 
-    // entry.game.startGame() TODO: uncomment when error is fixed
+    entry.game.startGame()
     entry.started = true
     gameEntries[code] = entry
     games[code] = entry.game

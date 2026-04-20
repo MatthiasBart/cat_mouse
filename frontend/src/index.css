@@ -54,14 +54,6 @@ body {
   margin: 0;
 }
 
-button {
-  cursor: pointer;
-}
-
-button:hover, button:active {
-  filter: brightness(85%); 
-}
-
 #app {
   width: 1126px;
   max-width: 100%;
