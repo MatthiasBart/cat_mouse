@@ -1,89 +1,119 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-
 import "./app.css";
-import type { Game, Cat, Mouse, Player, Role } from "./types";
-import { renderComponents, renderGameField } from "./views/renderGameField";
+import type { Game, Player, Role } from "./types";
+import type {
+  CaughtMessage,
+  GameInitMessage,
+  GameUpdateMessage,
+  VoteResultMessage,
+} from "./features/types";
+import { renderGameField } from "./views/renderGame";
 import { renderButton } from "./views/renderMenus";
-
-//const wss = new WebSocket.Server({ port: 8080 });
-//const websocket = new WebSocket("ws://localhost:8080/games/ws");
-
-/*
-async function renderMain() {
-  //login()
-  //renderTunnels()
-  //
-
-
-  map(tunnels) { tunnel in 
-    render(tunnel)
-  }
-}
-
-renderMain();
-
-
-async function renderTunnels(tunnels: Tunnel[]) {
-
-        foreach(tunnel) return renderTunnels()
-}
-
-*/
-
-/*async function getInitialState() {
-
-  
-}*/
+import {
+  handleCaughtMessage,
+  handleGameInitMessage,
+  handleGameUpdateMessage,
+} from "./features/game";
+import { handlePlayerVote, handleStartPlayerVote } from "./features/voting";
+import {
+  checkAutoEnterSubwayAsMouse,
+  handlePlayerEnterSubway,
+} from "./features/subwayLogic";
 
 export function App() {
-  //const [count, setCount] = useState(0);
-
-  //const initialState: Game = { game: null };
   const [gameCode, setGameCode] = useState<string | null>(null);
   const [gameCodeInput, setGameCodeInput] = useState("");
-  const [gameState, setGameState] = useState<Game>({
-    player: { type: "cat", name: "todo", x: 100, y: 100 },
-    mice: [
-      { x: 10, y: 10 },
-      { x: 55, y: 200 },
-      { x: 100, y: 100 },
-      { x: 100, y: 100 },
-    ],
-    subways: [
-      { x: 100, y: 100 },
-      { x: 33, y: 66 },
-      { x: 140, y: 200 },
-    ],
-    cats: [
-      { x: 150, y: 70 },
-      { x: 200, y: 140 },
-      { x: 250, y: 50 },
-      { x: 300, y: 180 },
-    ],
-  });
+  const [backendError, setBackendError] = useState<string | null>(null);
+  const [gameState, setGameState] = useState<Game | null>(null);
+  const [player, setPlayer] = useState<Player | null>(null);
+  const [voteResult, setVoteResult] = useState<{
+    winSubway: number;
+    token: number;
+  } | null>(null);
+
   //const getNewStuff(stuff => renderGameField(stuff))
-  //const [messages, setMessages] = useState([]);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const lastAutoEnterKeyRef = useRef<string | null>(null);
+
+  const parseServerMessage = (
+    rawMessage: MessageEvent["data"],
+  ):
+    | GameInitMessage
+    | GameUpdateMessage
+    | VoteResultMessage
+    | CaughtMessage
+    | null => {
+    if (typeof rawMessage === "string") {
+      try {
+        return JSON.parse(rawMessage);
+      } catch (error) {
+        console.error("Failed to parse websocket message:", error);
+        return null;
+      }
+    }
+
+    if (typeof rawMessage === "object" && rawMessage !== null) {
+      return rawMessage as
+        | CaughtMessage
+        | GameInitMessage
+        | GameUpdateMessage
+        | VoteResultMessage;
+    }
+
+    return null;
+  };
 
   const joinGame = async (gameCode: string, role: Role): Promise<string> => {
-    console.log("Joining game " + gameCode);
-    const response = await fetch(
-      `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}?role=${role}`, // todo add role:
-      // joinGame and createGame also set the playerId, see REST.md
-      {
-        method: "POST",
-        credentials: "include",
-      },
-    );
+    try {
+      setBackendError(null);
+      console.log("Joining game " + gameCode);
+      await fetch(
+        `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}?role=${role}`, // todo add role:
+        // joinGame and createGame also set the playerId, see REST.md
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+    } catch (error) {
+      console.error("Failed to create game:", error);
+      setBackendError("Failed: server running?");
+      throw error;
+    }
+
     //console.log(response);
     console.log("opening websocket");
     const socket = new WebSocket("ws://localhost:8080/games/ws");
 
     socket.onopen = () => console.log("Connected to WebSocket server");
     socket.onmessage = (event: MessageEvent) => {
-      console.log("onmessage:", event.data);
-      // setGameState(...)
+      //const msg = JSON.parse(event.data);
+      //console.log("raw WS msg", msg);
+      const serverMessage = parseServerMessage(event.data);
+      if (!serverMessage) return;
+
+      //console.log("onmessage:", serverMessage);
+      switch (serverMessage.type) {
+        case "GAME_INIT":
+          handleGameInitMessage(serverMessage, setGameState, setPlayer);
+          break;
+        case "GAME_UPDATE":
+          if (!serverMessage.mice) {
+            return;
+          }
+          handleGameUpdateMessage(serverMessage, setGameState, setPlayer);
+          break;
+        case "CAUGHT":
+          handleCaughtMessage(serverMessage, setGameState);
+          break;
+        case "VOTE_RESULT":
+          setVoteResult((prevResult) => ({
+            winSubway: serverMessage.win_subway,
+            token: (prevResult?.token ?? 0) + 1,
+          }));
+          break;
+      }
     };
     socket.onclose = () => console.log("Disconnected from WebSocket server");
     socket.onerror = (err) => console.error("WebSocket error:", err);
@@ -104,35 +134,81 @@ export function App() {
     return () => wsRef.current?.close();
   }, []);
 
-  const createGame = async (): Promise<string> => {
-    // todo: it also auto-joins that game
-    const res = await fetch("http://localhost:8080/games", {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) throw new Error("Failed to create game");
-    const data = await res.json(); // { role, playerName, code }
-    console.log("gamecode. " + data.code);
-    return data.code;
-  };
+  useEffect(() => {
+    if (!voteResult) return;
 
-  // return UI with Join button calling joinGame
+    const currentToken = voteResult.token;
+    const timer = setTimeout(() => {
+      setVoteResult((prevResult) => {
+        if (!prevResult) return prevResult;
+        if (prevResult.token !== currentToken) return prevResult;
+        return null;
+      });
+    }, 15000);
+
+    return () => clearTimeout(timer);
+  }, [voteResult]);
+
+  const createGame = async (): Promise<string> => {
+    try {
+      setBackendError(null);
+      // todo: it also auto-joins that game
+      const res = await fetch("http://localhost:8080/games", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create game");
+      const data = await res.json(); // { role, playerName, code }
+      console.log("gamecode. " + data.code);
+      return data.code;
+    } catch (error) {
+      console.error("Failed to create game:", error);
+      setBackendError("Failed: server running?");
+      throw error;
+    }
+  };
 
   // https://medium.com/@chaman388/websockets-in-reactjs-a-practical-guide-with-real-world-examples-2efe483ee150
 
-  /*const sendMessage = () => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(input);
-      setInput("");
-    }
-  };*/
+  const handleVote = (subwayId: number) => {
+    if (player?.role === "mouse" && gameState?.status === "caught") return;
 
-  const onMove = (ws: WebSocket | null) => {
-    // according to claude, the client renders his own prediction but the server validates
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-    if (!ws) return;
-    ws.send(JSON.stringify({ type: "MOVE", test: "test" }));
+    handlePlayerVote(subwayId, ws);
   };
+
+  const handleStartVote = () => {
+    if (player?.role === "mouse" && gameState?.status === "caught") return;
+
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    handleStartPlayerVote(ws);
+  };
+
+  const handleEnterSubway = (subwayId: number) => {
+    if (player?.role === "mouse" && gameState?.status === "caught") return;
+
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    handlePlayerEnterSubway(subwayId, ws);
+  };
+
+  useEffect(() => {
+    if (!gameCode || !gameState || !player) {
+      lastAutoEnterKeyRef.current = null;
+      return;
+    }
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    checkAutoEnterSubwayAsMouse(player, gameState, lastAutoEnterKeyRef, ws);
+  }, [gameCode, gameState, player?.role, player?.subway, player?.x, player?.y]);
+
+  // catch keydown events for moving:
   useEffect(() => {
     if (!gameCode) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -144,7 +220,9 @@ export function App() {
       ) {
         return;
       }
-      console.log("onKeyDown " + e.key);
+      if (player?.role === "mouse" && gameState?.status === "caught") return;
+
+      //console.log("onKeyDown " + e.key);
       e.preventDefault();
       const ws = wsRef.current;
       if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -155,10 +233,12 @@ export function App() {
         }),
       );
 
-      // Change the player's x or y coordinates depending on the key press
-      setGameState((prevGameState: Game) => {
-        if (!prevGameState || !prevGameState.player) return prevGameState;
-        let { x, y } = prevGameState.player;
+      // Change the player's x or y coordinates depending on the key press.
+      // Use the previous state to avoid stale closures in this effect.
+      setPlayer((prevPlayer: Player | null) => {
+        if (!prevPlayer) return prevPlayer;
+
+        let { x, y } = prevPlayer;
         switch (e.key) {
           case "ArrowUp":
             y -= 10;
@@ -180,64 +260,222 @@ export function App() {
         y = Math.max(0, Math.min(350, y));
 
         return {
-          ...prevGameState,
-          player: {
-            ...prevGameState.player,
-            x,
-            y,
-          },
+          ...prevPlayer,
+          x,
+          y,
         };
       });
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [gameCode, player, gameState?.status]);
+
+  // mock update message:
+  useEffect(() => {
+    if (!gameCode) return;
+
+    const mockGameUpdate: GameUpdateMessage = {
+      type: "GAME_UPDATE",
+      seq: 1,
+      timeLeft: 119,
+      player: {
+        id: 7,
+        name: "player",
+        role: "mouse",
+        subway: undefined,
+        position: undefined,
+      },
+      mice: [
+        {
+          id: 21,
+          name: "outside-mouse",
+          subway: undefined,
+          position: { x: 220, y: 120 },
+        },
+      ],
+      cats: [
+        {
+          id: 1,
+          name: "tom",
+          position: { x: 320, y: 220 },
+          type: "live",
+        },
+        {
+          id: 2,
+          name: "ghost-tom",
+          position: { x: 130, y: 240 },
+          type: "ghost",
+        },
+      ],
+      active_vote: undefined /* {
+        timeLeft: 15,
+        votes: [
+          { subwayId: 1, votes: 2 },
+          { subwayId: 2, votes: 3 },
+        ],
+      },*/,
+    };
+
+    const timer = setTimeout(
+      () => handleGameUpdateMessage(mockGameUpdate, setGameState, setPlayer),
+      1200,
+    );
+
+    return () => clearTimeout(timer);
   }, [gameCode]);
 
+  // mock vote result message:
+  useEffect(() => {
+    if (!gameCode) return;
+
+    const mockVoteResult: VoteResultMessage = {
+      type: "VOTE_RESULT",
+      win_subway: 2,
+    };
+
+    const timer = setTimeout(() => {
+      setVoteResult((prevResult) => ({
+        winSubway: mockVoteResult.win_subway,
+        token: (prevResult?.token ?? 0) + 1,
+      }));
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [gameCode]);
+
+  // mock caught message: TODO remove
   /*useEffect(() => {
-    const intervalId = setInterval(() => {
-      setGameState((prevGameState: Game) => {
-        if (prevGameState.mice.length === 0) {
-          return prevGameState;
-        }
+    if (!gameCode) return;
+    if (player?.role !== "mouse") return;
 
-        const moveX = (x: number): number => {
-          if (x < 600) {
-            return x + 4;
-          }
-          if (x > 0) {
-            return x - 4;
-          }
-          return x;
-        };
-        const newMice = prevGameState.mice.map((mouse, index) => {
-          if (index !== 0) return mouse;
+    const mockCaught: CaughtMessage = {
+      type: "CAUGHT",
+    };
 
-          return {
-            ...mouse,
-            x: moveX(mouse.x),
-            y: mouse.y,
-          };
-        });
+    const timer = setTimeout(() => {
+      handleCaughtMessage(mockCaught, setGameState);
+    }, 30000);
 
-        return {
-          ...prevGameState,
-          mice: newMice,
-        };
-      });
-    }, 50);
+    return () => clearTimeout(timer);
+  }, [gameCode, player?.role]);*/
 
-    return () => clearInterval(intervalId);
-  }, []);*/
+  // mock init message:
+  useEffect(() => {
+    if (!gameCode) return;
+    // Mock data resembling a GAME_INIT message
+    const mockGameInit: GameInitMessage = {
+      type: "GAME_INIT",
+      role: "mouse",
+      fieldSize: {
+        width: 600,
+        height: 400,
+      },
+      playerPosition: { x: 50, y: 50 },
+      subways: [
+        {
+          id: 1,
+          name: "Red Line",
+          exits: [
+            { x: 100, y: 100 },
+            { x: 300, y: 200 },
+          ],
+        },
+        {
+          id: 2,
+          name: "Blue Line",
+          exits: [
+            { x: 400, y: 100 },
+            { x: 200, y: 350 },
+          ],
+        },
+      ],
+    };
+
+    // Call the handler with mock data to initialize game state
+    setTimeout(
+      () => handleGameInitMessage(mockGameInit, setGameState, setPlayer),
+      500,
+    );
+
+    // Only once per gameCode
+    // eslint-disable-next-line
+  }, [gameCode]);
 
   return (
     <>
       <section id="center">
         <h1>Cat & Mouse</h1>
         {gameCode && renderButton("Exit", exitGame)}
-        {gameState && gameCode && renderGameField(gameState, renderComponents)}
+
+        {voteResult && (
+          <div
+            style={{
+              margin: "8px auto",
+              maxWidth: "420px",
+              padding: "8px 12px",
+              border: "1px solid #14532d",
+              borderRadius: 8,
+              backgroundColor: "#dcfce7",
+              color: "#14532d",
+              fontWeight: 600,
+            }}
+          >
+            Vote finished. Winning subway:{" "}
+            {gameState?.subways.find(
+              (subway) => subway.id === voteResult.winSubway,
+            )?.name ?? `#${voteResult.winSubway}`}
+          </div>
+        )}
+        {player?.role === "mouse" && gameState?.status === "caught" && (
+          <div
+            style={{
+              margin: "8px auto",
+              maxWidth: "420px",
+              padding: "8px 12px",
+              border: "1px solid #7f1d1d",
+              borderRadius: 8,
+              backgroundColor: "#fee2e2",
+              color: "#7f1d1d",
+              fontWeight: 600,
+            }}
+          >
+            You were caught. Spectating mode active.
+          </div>
+        )}
+        {backendError && (
+          <div
+            style={{
+              margin: "8px auto",
+              maxWidth: "420px",
+              padding: "8px 12px",
+              border: "1px solid #7f1d1d",
+              borderRadius: 8,
+              backgroundColor: "#fee2e2",
+              color: "#7f1d1d",
+              fontWeight: 600,
+            }}
+          >
+            {backendError}
+          </div>
+        )}
+        {gameState &&
+          gameCode &&
+          player &&
+          renderGameField(
+            gameState,
+            player,
+            handleVote,
+            handleStartVote,
+            handleEnterSubway,
+          )}
         {!gameCode &&
-          renderButton("Create Game", async () => {
-            const gameCode = await joinGame(await createGame());
+          renderButton("Create Game & Join (as cat)", async () => {
+            const gameCode = await joinGame(await createGame(), "cat");
+            setGameCode(gameCode);
+          })}
+        {!gameCode &&
+          renderButton("Create Game & Join (as mouse)", async () => {
+            const gameCode = await joinGame(await createGame(), "mouse");
             setGameCode(gameCode);
           })}
         {!gameCode && (
@@ -253,8 +491,8 @@ export function App() {
         )}
 
         {!gameCode &&
-          renderButton("Join Game", async () => {
-            const gameCode = await joinGame(gameCodeInput);
+          renderButton("Join Game (as cat)", async () => {
+            const gameCode = await joinGame(gameCodeInput, "cat");
             setGameCode(gameCode);
           })}
       </section>

@@ -46,6 +46,7 @@ When player joins a game as a mouse:
 {
   "type": "GAME_INIT",
   "role": "mouse",
+  "playerPosition": { "x": number, "y": number },
   "fieldSize": {
     "width": 600,
     "height": 450
@@ -63,7 +64,8 @@ When player joins a game as a cat:
 ```json
 {
   "type": "GAME_INIT",
-  "role": "mouse",
+  "role": "cat",
+  "playerPosition": { "x": number, "y": number },
   "subways: [{
       "exits": { "x": number, "y": number }[]
     }]
