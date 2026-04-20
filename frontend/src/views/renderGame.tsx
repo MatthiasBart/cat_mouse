@@ -108,8 +108,8 @@ export function renderComponents(
               src="./cat.png"
               alt={cat.type === "ghost" ? "ghost cat" : "cat"}
               style={{
-                width: 50,
-                height: 50,
+                width: 90,
+                height: 90,
                 opacity: cat.type === "ghost" ? 0.6 : 1,
                 filter: cat.type === "ghost" ? "grayscale(100%)" : "none",
               }}
