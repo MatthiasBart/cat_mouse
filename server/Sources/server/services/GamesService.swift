@@ -140,6 +140,20 @@ actor GamesService {
     return player
   }
 
+  func ensureCreatorCanManageAI(code: String, requesterPlayerId: Int64) throws {
+    guard let entry = gameEntries[code] else {
+      throw GameError.gameNotFound
+    }
+
+    if entry.creatorPlayerId != requesterPlayerId {
+      throw GameError.forbidden
+    }
+
+    if entry.started {
+      throw GameError.gameAlreadyStarted
+    }
+  }
+
   private func registerPlayer(game: Game, playerName: String, role: Role) -> Int64 {
     switch role {
     case .cat:

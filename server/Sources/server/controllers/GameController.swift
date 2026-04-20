@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Foundation
 
 protocol GameControllerProtocol {
   /// Create a new game, returns game code
@@ -150,7 +151,19 @@ extension GameController: GameControllerProtocol {
     let playerRequest = try req.query.decode(PlayerRequest.self)
     let role = try parseRole(from: playerRequest.role)
 
-    req.logger.notice("Add AI to game \(code) with role \(role.rawValue)")
+    do {
+      try await manager.ensureCreatorCanManageAI(code: code, requesterPlayerId: session.playerId)
+    } catch let error as GameError {
+      throw mapToAbort(error)
+    }
+
+    do {
+      try spawnAIProcess(req: req, code: code, role: role)
+    } catch {
+      req.logger.error("Failed to spawn AI process for game \(code): \(error)")
+      throw Abort(.internalServerError, reason: "Failed to start AI process")
+    }
+
     return Response(status: .noContent)
   }
 
@@ -184,5 +197,37 @@ extension GameController: GameControllerProtocol {
     default:
       return Abort(.badRequest, reason: error.localizedDescription)
     }
+  }
+
+  private func spawnAIProcess(req: Request, code: String, role: Role) throws {
+    // NOTE: make sure the binary is built
+    let aiBinaryPath = "../ai/game-ai" 
+    let roleArgument: String
+
+    switch role {
+    case .cat:
+      roleArgument = "cat"
+    case .mouse:
+      roleArgument = "mouse"
+    }
+
+    let aiName = "ai-\(roleArgument)-\(UUID().uuidString.prefix(8))"
+
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: aiBinaryPath)
+    process.arguments = [
+      "--host=http://localhost:8080",
+      "--code=\(code)",
+      "--role=\(roleArgument)",
+      "--name=\(aiName)",
+    ]
+
+    req.logger.notice(
+      "Spawning AI process path=\(aiBinaryPath) code=\(code) role=\(roleArgument) name=\(aiName)")
+
+    try process.run()
+
+    req.logger.notice(
+      "Spawned AI process pid=\(process.processIdentifier) for game \(code) as \(role.rawValue)")
   }
 }

@@ -57,7 +57,18 @@ Response: `204 No Content`
 
 ## Add AI / Computer Player
 
-TBD
+- `POST /games/{code}/ai`
+- Query parameters:
+  - `role`: required, `cat` or `mouse`
+
+Behavior:
+
+- only creator can call this endpoint
+- game must not already be started
+- backend spawns the local AI binary (`ai/game-ai`) as a separate process (ensure binary is built, by running go build)
+- AI joins the game as a normal player using the supplied role
+
+Response: `204 No Content`
 
 ## Error Behavior
 
