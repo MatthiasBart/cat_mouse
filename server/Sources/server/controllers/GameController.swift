@@ -36,6 +36,7 @@ struct GameController: RouteCollection {
     let gameRoute = routes.grouped("games")
     gameRoute.post(use: self.createGame)
     gameRoute.post(":code", "players", use: self.joinGame)
+    gameRoute.post(":code", "ai", use: self.addAI)
     gameRoute.patch(":code", use: self.updateGame)
   }
 }
