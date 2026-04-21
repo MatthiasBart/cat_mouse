@@ -20,6 +20,14 @@ public class Game {
 
     var endTime: Date? = nil
 
+    private var nextId: Int64 = 1
+
+    private func generateId() -> Int64 {
+      let id = nextId
+      nextId += 1
+      return id
+    }
+
     var cats: [Cat] { 
         players.compactMap {
             $0 as? Cat 
@@ -32,7 +40,7 @@ public class Game {
         }
     }
 
-    var gameReady: Bool {
+    public var gameReady: Bool {
         mice.count + cats.count > 0 
     }
 
@@ -45,16 +53,20 @@ public class Game {
         votings = [:]
     }
 
-    public func addMouse(name: String) {
+    public func addMouse(name: String) -> Int64{
         let mouse = Mouse()
         mouse.name = name
+        mouse.id = generateId()
         self.players.append(mouse)
+        return mouse.id
     }
 
-    public func addCat(name: String) {
+    public func addCat(name: String) -> Int64 {
         let cat = Cat()
         cat.name = name
+        cat.id = generateId()
         self.players.append(cat)
+        return cat.id
     }
 
     public func startVoting(subway: Int64, manager: Int64) throws {
