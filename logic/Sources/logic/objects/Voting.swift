@@ -2,9 +2,9 @@ import Foundation
 
 class Voting {
     typealias Votes = [Mouse.ID: Subway.ID]
-    let endTime: Date
+    var endTime: Date
     var votes: Votes
-    let manager: Mouse
+    var manager: Mouse
 
     init(endTime: Date = Date(), votes: Votes = [:], manager: Mouse) {
         self.endTime = endTime
