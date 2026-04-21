@@ -1,27 +1,45 @@
 export type Game = {
-  player: Player;
+  status: "inactive" | "ongoing" | "caught" | "won" | "lost";
   subways: Subway[];
   cats: Cat[];
   mice: Mouse[];
+  fieldSize: {
+    width: number;
+    height: number;
+  };
+  seq?: number;
+  timeLeft?: number;
+  activeVote?: ActiveVote;
 };
 
 interface Positionable {
   x: number;
   y: number;
 }
+export type Role = "cat" | "mouse";
 export interface Player extends Positionable {
+  id?: number;
   name: string;
-  type: "cat" | "mouse";
+  role: Role;
+  subway?: number;
 }
-export interface Subway extends Positionable {}
-export interface Cat extends Positionable {}
-export interface Mouse extends Positionable {}
+export type Subway = {
+  id?: number;
+  name?: string;
+  exits: { x: number; y: number }[];
+};
+export interface Cat extends Positionable {
+  id: number;
+  name: string;
+  type: "live" | "ghost";
+}
+export interface Mouse extends Positionable {
+  id: number;
+  name: string;
+  subway?: number;
+}
 
-type Moveable = {};
-
-type Component = {};
-
-//async function mouse(): Component {}
-//async function cat(): Component {}
-
-async function layerone() {}
+export type ActiveVote = {
+  timeLeft: number;
+  votes: { subwayId: number; votes: number }[];
+};

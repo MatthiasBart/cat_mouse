@@ -100,6 +100,7 @@ When player joins a game as a mouse:
 {
   "type": "GAME_INIT",
   "role": "mouse",
+  "playerPosition": { "x": number, "y": number },
   "fieldSize": {
     "width": 600,
     "height": 450
@@ -107,7 +108,7 @@ When player joins a game as a mouse:
   "subways: [ {
       "id": number,
       "name": string,
-      "exits": { "x": number, "y": number }[]
+      "exits": { "x": number, "y": number, id: number }[]
     }]
 }
 ```
@@ -117,7 +118,8 @@ When player joins a game as a cat:
 ```json
 {
   "type": "GAME_INIT",
-  "role": "mouse",
+  "role": "cat",
+  "playerPosition": { "x": number, "y": number },
   "subways: [{
       "exits": { "x": number, "y": number }[]
     }]
@@ -234,6 +236,15 @@ _Quote from assignment_:
 {
   "type": "ENTER_SUBWAY",
   "subwayId": 5
+}
+```
+
+- Leaving a subway as a mouse, front-end can decide how this is implemented
+
+```json
+{
+  "type": "LEAVE_SUBWAY",
+  "exitId": "number" // id of the unique subway-exit
 }
 ```
 
