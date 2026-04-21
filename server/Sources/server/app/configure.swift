@@ -3,6 +3,7 @@ import Vapor
 /// configures your application
 public func configure(_ app: Application) async throws {
   let clientsService = ClientsService()  // TODO: DI?
+  let gamesService = GamesService()
 
     let cors = CORSMiddleware(configuration: .init(
     allowedOrigin: .custom("http://localhost:5173"),
@@ -14,5 +15,5 @@ public func configure(_ app: Application) async throws {
 
   app.middleware.use(app.sessions.middleware)
   app.lifecycle.use(GameLifecycleHandler(clientsService: clientsService))
-  try routes(app, clientsService: clientsService)
+  try routes(app, clientsService: clientsService, gamesService: gamesService)
 }

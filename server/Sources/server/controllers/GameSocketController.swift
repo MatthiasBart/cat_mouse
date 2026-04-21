@@ -15,13 +15,17 @@ protocol GameSocketControllerProtocol {
 
 struct GameSocketController: RouteCollection {
   let service: ClientsService
+  let gamesService: GamesService
 
-  init(clientsService: ClientsService) {
+  init(clientsService: ClientsService, gamesService: GamesService) {
     self.service = clientsService
+    self.gamesService = gamesService
   }
 
   func boot(routes: any RoutesBuilder) throws {
-    routes.webSocket("games", "ws") { req, ws in
+    let protectedRoutes = routes.grouped(PlayerSessionGuardMiddleware())
+
+    protectedRoutes.webSocket("games", ":code", "ws") { req, ws in
       self.connect(req: req, ws: ws)
     }
   }
@@ -30,6 +34,7 @@ struct GameSocketController: RouteCollection {
 extension GameSocketController: GameSocketControllerProtocol {
   func connect(req: Request, ws: WebSocket) {
     guard let session = PlayerSession(req: req) else {
+      req.logger.info("Connection rejected: Missing or invalid session.")
       ws.send("Connection rejected: Missing or invalid session.")
       _ = ws.close(code: .policyViolation)
       return
@@ -37,10 +42,44 @@ extension GameSocketController: GameSocketControllerProtocol {
 
     req.logger.info("Player \(session.playerName) ws connection.")
 
-    let client = GameClient(socket: ws, role: session.role)
+    let client = GameClient(
+      socket: ws,
+      role: session.role,
+      gameCode: session.code,
+      playerId: session.playerId
+    )
 
     let storeTask = Task {
       await service.add(client)
+
+      do {
+        let metaData = try await gamesService.getGameMetaData(code: session.code)
+        let players = metaData.players.map {
+          ConnectionInit.PlayerInfo(
+            playerId: $0.playerId,
+            playerName: $0.playerName,
+            role: $0.role,
+            isCreator: $0.isCreator,
+            isComputer: $0.isComputer
+          )
+        }
+
+        await service.send(
+          ConnectionInit(
+            code: metaData.code,
+            started: metaData.started,
+            currentPlayerId: session.playerId,
+            players: players
+          ),
+          to: client.id
+        )
+
+        if metaData.started {
+          await service.send(GameInit(code: metaData.code, role: session.role), to: client.id)
+        }
+      } catch {
+        req.logger.warning("Failed to send connection init for \(session.code): \(error)")
+      }
     }
 
     req.logger.notice("Player \(client.role) \(client.id) connected.")
@@ -53,7 +92,7 @@ extension GameSocketController: GameSocketControllerProtocol {
       req.logger.notice("Client \(client.id) disconnected.")
       Task {
         storeTask.cancel()
-        await service.remove(with: client.id)
+        await service.remove(client: client.id, in: client.gameCode)
       }
     }
   }
