@@ -21,14 +21,6 @@ public class Game {
 
     var endTime: Date? = nil
 
-    private var nextId: Int64 = 1
-
-    private func generateId() -> Int64 {
-      let id = nextId
-      nextId += 1
-      return id
-    }
-
     var cats: [Cat] { 
         players.compactMap {
             $0 as? Cat 
@@ -57,7 +49,7 @@ public class Game {
     public func addMouse(name: String) -> Int64{
         let mouse = Mouse()
         mouse.name = name
-        mouse.id = generateId()
+        mouse.id = Int64(UUID().hashValue)
         self.players.append(mouse)
         return mouse.id
     }
@@ -65,7 +57,7 @@ public class Game {
     public func addCat(name: String) -> Int64 {
         let cat = Cat()
         cat.name = name
-        cat.id = generateId()
+        cat.id = Int64(UUID().hashValue)
         self.players.append(cat)
         return cat.id
     }
@@ -95,7 +87,11 @@ public class Game {
 
             for exit_id in 0...exitsForSubway {
                 exits.append(
-                    Exit(id: Int64((id * numberOfExits) + exit_id), position: .random, subway: subway) // to have unique ids for each hole, id*numberOfExits is the offset for the subway, hole id is the offset for the hole in the subway
+                        Exit(
+                            id: Int64((id * numberOfExits) + exit_id),
+                            position: .random,
+                            subway: subway
+                            ) // to have unique ids for each hole, id*numberOfExits is the offset for the subway, hole id is the offset for the hole in the subway
                 )
             }
                     
@@ -128,7 +124,15 @@ public class Game {
                 .inRange()
 
         player.position = newPosition
-        // TODO check if cat hit mouse
+
+        if let cat = player as? Cat {
+            for mouse in mice.filter({ $0.subway == nil }) {
+               if cat.position.isNear(mouse.position) {
+                   cat.caught.append(mouse.id)
+                   mouse.caught = cat.id
+               }
+            }
+        }
     }
 }
 

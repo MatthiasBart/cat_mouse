@@ -5,6 +5,7 @@ class Mouse: Player {
     var name: String = "" 
     var subway: Subway.ID? = nil
     var position: Position = .base
+    var caught: Cat.ID? = nil
     var totalTimeOnSurface: TimeInterval = 0
     var lastExit: Date = Date()
 }
