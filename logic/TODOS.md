@@ -10,5 +10,12 @@
     - mouse hat leftAt: Time property, um die zeit zu berechnen wie lange sie drausen war
 
 - cat hat eine caught array mit den IDs der mäuse 
+- maybe prohibit that exits can spawn next to each other 
 
-- 
+
+- mergen
+- ai feritg machen -> Siu
+- ws messages mit Game verbinden -> Matthias, Siu 
+- logic fertig machen nach todos.md in logic folder -> Matthisa
+- UI anpassen für different games -> Stefan
+- room definitions
