@@ -32,6 +32,10 @@ public class Game {
         }
     }
 
+    var gameReady: Bool {
+        mice.count + cats.count > 0 
+    }
+
     static let duration: TimeInterval = 300
 
     public init() {
@@ -103,7 +107,7 @@ public class Game {
         var numberOfExitsLeft = numberOfExits
         var id: Subway.ID = 0
 
-        while numberOfExitsLeft >= 1 {
+        while numberOfExitsLeft > 1 {
             let exitsForSubway = Int64.random(in: 1...numberOfExitsLeft / 2)
             let subway = Subway(id: id)
 

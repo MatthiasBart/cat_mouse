@@ -7,6 +7,9 @@ protocol ClientMessage: Decodable {
 }
 
 enum ServerMessageType: String, Codable {
+  case connectionInit = "CONNECTION_INIT"
+  case playerJoined = "PLAYER_JOINED"
+  case gameInit = "GAME_INIT"
   case gameUpdate = "GAME_UPDATE"
   case gameOver = "GAME_OVER"
   case error = "ERROR"

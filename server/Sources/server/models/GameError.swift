@@ -6,16 +6,26 @@ enum GameError: Int, Error, LocalizedError {
   case invalidData = 1001
   case invalidJSON = 1002
   case invalidType = 1003
+  case invalidRole = 1004
 
   // 2xxx: Game Logic Errors
   case invalidMove = 2001
+  case gameNotFound = 2002
+  case gameAlreadyStarted = 2003
+  case forbidden = 2004
+  case gameNotReady = 2005
 
   var errorDescription: String? {
     switch self {
     case .invalidData: "Invalid data."
     case .invalidJSON: "Invalid json."
     case .invalidType: "Invalid message type."
+    case .invalidRole: "Invalid role."
     case .invalidMove: "That move is invalid."
+    case .gameNotFound: "Game not found."
+    case .gameAlreadyStarted: "Game already started."
+    case .forbidden: "You are not allowed to perform this action."
+    case .gameNotReady: "Game cannot be started yet."
     default: "Unexpected server error occurred"
     }
   }

@@ -1,24 +1,78 @@
 # WebSocket API Spec
 
-Clients can connect `/games/ws` to with a valid session (see [REST specs](./REST.md)).
+Clients can connect to `/games/{code}/ws` with a valid session (see [REST specs](./REST.md)).
 
-## Messages (WIP)
+Both WS routes are protected by backend session middleware:
+
+- Missing/invalid session -> rejected (`401 Unauthorized`)
+- `/games/{code}/ws` with code not matching session game code -> rejected (`403 Forbidden`)
+
 
 ### Overview
 
 | Type           | Direction        | Link |
 | -------------- | ---------------- | ---- |
+| `CONNECTION_INIT` | Server -> Client |      |
+| `PLAYER_JOINED` | Server -> Client |      |
+| `GAME_INIT`    | Server -> Client |      |
 | `GAME_UPDATE`  | Server -> Client |      |
-| `GAME_OVER`    | Server -> Client |      |
+| `CAUGHT`       | Server -> Client |      |
+| `VOTE_RESULT`  | Server -> Client |      |
+| `GAME_ENDED`   | Server -> Client |      |
 | `MOVE`         | Client -> Server |      |
 | `LEAVE_SUBWAY` | Client -> Server |      |
 | `ENTER_SUBWAY` | Client -> Server |      |
-| `BEGIN_VOTE`   | Client -> Server |      |
-| `END_VOTE`     | Client -> Server |      |
-| `VOTE`         | Client -> Server |      |
+| `START_VOTE`   | Client -> Server |      |
+| `LEAVE_GAME`   | Client -> Server |      |
+| `VOTE_DECISION` | Client -> Server |      |
 | `ERROR`        | Server -> Client |      |
 
 ### Server -> Clients
+
+#### Connection Init
+
+Sent once right after WS connect.
+
+- `started=false` -> game has not started yet, client should stay in room/waiting UI.
+- `started=true` -> game already started, server also sends `GAME_INIT`.
+
+```json
+{
+  "type": "CONNECTION_INIT",
+  "code": "A3E2E18E-332B-49D4-B00C-FAE4D14C56D0",
+  "started": false,
+  "currentPlayerId": 1,
+  "players": [
+    {
+      "playerId": 1,
+      "playerName": "tom123",
+      "role": "CAT",
+      "isCreator": true,
+      "isComputer": false
+    }
+  ]
+}
+```
+
+#### Player Joined
+
+Broadcast to all connected clients in the same game when a player joins via REST.
+
+```json
+{
+  "type": "PLAYER_JOINED",
+  "code": "A3E2E18E-332B-49D4-B00C-FAE4D14C56D0",
+  "player": {
+    "playerId": 2,
+    "playerName": "jerry123",
+    "role": "MOUSE",
+    "isCreator": false,
+    "isComputer": false
+  }
+}
+```
+
+`PLAYER_LEFT` is not implemented (yet).
 
 #### Game update (TBD)
 
