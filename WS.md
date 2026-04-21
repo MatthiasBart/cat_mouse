@@ -54,7 +54,7 @@ When player joins a game as a mouse:
   "subways: [ {
       "id": number,
       "name": string,
-      "exits": { "x": number, "y": number }[]
+      "exits": { "x": number, "y": number, id: number }[]
     }]
 }
 ```
@@ -182,6 +182,15 @@ _Quote from assignment_:
 {
   "type": "ENTER_SUBWAY",
   "subwayId": 5
+}
+```
+
+- Leaving a subway as a mouse, front-end can decide how this is implemented
+
+```json
+{
+  "type": "LEAVE_SUBWAY",
+  "exitId": "number" // id of the unique subway-exit
 }
 ```
 
