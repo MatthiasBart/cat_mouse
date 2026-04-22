@@ -8,12 +8,10 @@ import Vapor
 import Foundation
 
 struct RestController: RouteCollection {
-  let gameService: GamesService
-  let clientsService: ClientsService
+  let roomsService: RoomsService
 
-  init(gamesService: GamesService, clientsService: ClientsService) {
-    self.gameService = gamesService
-    self.clientsService = clientsService
+  init(roomsService: RoomsService) {
+    self.roomsService = roomsService
   }
 
   func boot(routes: any RoutesBuilder) throws {
@@ -39,7 +37,7 @@ struct RestController: RouteCollection {
     return parsedRole
   }
 
-  func mapToAbort(_ error: GameError) -> Abort {
+  func mapToAbort(_ error: ServerError) -> Abort {
     switch error {
     case .gameNotFound:
       return Abort(.notFound, reason: error.localizedDescription)

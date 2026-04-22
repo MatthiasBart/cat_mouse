@@ -15,7 +15,7 @@ extension RestController {
             throw Abort(.unauthorized, reason: "Missing or invalid session")
         }
 
-        guard info.code == code else {
+        guard info.roomCode == code else {
             throw Abort(.forbidden, reason: "Session does not belong to this game")
         }
 

@@ -6,36 +6,49 @@
 import Vapor
 
 class WebSocketController: RouteCollection {
-  let clientService: ClientsService
-  let gamesService: GamesService
-  var wsStore: [Int64: WebSocket] = [:]
+  let roomsService: RoomsService
 
-  init(clientsService: ClientsService, gamesService: GamesService) {
-    self.clientService = clientsService
-    self.gamesService = gamesService
+  init(roomsService: RoomsService) {
+    self.roomsService = roomsService
   }
 
   func boot(routes: any RoutesBuilder) throws {
     let protectedRoutes = routes.grouped(PlayerSessionGuardMiddleware())
 
-    protectedRoutes.webSocket("games", ":code", "ws") { req, ws in
-      self.connect(req: req, ws: ws)
+    protectedRoutes.webSocket("games", ":code", "ws") { [weak self] req, ws in
+      try? await self?.connect(req: req, ws: ws)
     }
   }
 }
 
 extension WebSocketController {
-  func connect(req: Request, ws: WebSocket) {
-    guard let info = PlayerInfo(from: req.session) else {
+  func connect(req: Request, ws: WebSocket) async throws {
+    guard let playerInfo = PlayerInfo(from: req.session) else {
       req.logger.info("Connection rejected: Missing or invalid session.")
-      ws.send("Connection rejected: Missing or invalid session.")
-      _ = ws.close(code: .policyViolation)
+      try await ws.send("Connection rejected: Missing or invalid session.")
+      _ = try? await ws.close(code: .policyViolation)
       return
     }
 
-    req.logger.info("Player \(info.playerName) ws connection.")
+    req.logger.info("Player \(playerInfo.name) ws connection.")
 
-    wsStore[info.playerId] = ws
+    await roomsService.setWS(ws, for: playerInfo.id, in: playerInfo.roomCode)
+
+    try await ws.send(
+      ConnectionInitMessage(
+        code: playerInfo.roomCode,
+        currentPlayerId: playerInfo.id,
+        players: []
+        )
+    )
+
+    try await setupListeners(for: playerInfo.id, in: playerInfo.roomCode)
+  }
+
+  func setupListeners(for player: Int64, in room: String) async throws {
+    guard let ws = await roomsService.getWS(of: player, in: room) else {
+        throw ServerError.wsConnectionNotFound
+    }
 
     ws.onMessage({ ws, message in
       if let move = message as? MoveMessage {
@@ -43,51 +56,8 @@ extension WebSocketController {
       } 
     })  
 
-    let storeTask = Task {
-      await service.add(client)
-
-      do {
-        let metaData = try await gamesService.getGameMetaData(code: session.code)
-        let players = metaData.players.map {
-          ConnectionInit.PlayerInfo(
-            playerId: $0.playerId,
-            playerName: $0.playerName,
-            role: $0.role,
-            isCreator: $0.isCreator,
-            isComputer: $0.isComputer
-          )
-        }
-
-        await service.send(
-          ConnectionInit(
-            code: metaData.code,
-            started: metaData.started,
-            currentPlayerId: session.playerId,
-            players: players
-          ),
-          to: client.id
-        )
-
-        if metaData.started {
-          await service.send(GameInit(code: metaData.code, role: session.role), to: client.id)
-        }
-      } catch {
-        req.logger.warning("Failed to send connection init for \(session.code): \(error)")
-      }
-    }
-
-    req.logger.notice("Player \(client.role) \(client.id) connected.")
-
-    ws.onText { ws, text in
-      self.onText(req, ws, client.id, text)
-    }
-
-    ws.onClose.whenComplete { _ in
-      req.logger.notice("Client \(client.id) disconnected.")
-      Task {
-        storeTask.cancel()
-        await service.remove(client: client.id, in: client.gameCode)
-      }
+    ws.onClose.whenComplete { [weak self] _ in
+      Task { await self?.roomsService.setWS(nil, for: player, in: room) }
     }
   }
 }

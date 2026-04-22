@@ -18,20 +18,20 @@ extension RestController {
         let role = try parseRole(from: playerRequest.role)
         let playerName = parsePlayerName(from: playerRequest.playerName)
 
-        let (code, registration) = await gameService.createGame(playerName: playerName, role: role)
+        let (code, playerId) = await roomsService.createRoom(playerName: playerName, role: role)
 
         let info = PlayerInfo(
-            playerId: registration.playerId,
-            role: registration.role,
-            playerName: playerName,
+            id: playerId,
+            role: role,
+            name: playerName,
             code: code
         )
         info.save(to: req.session)
 
-        req.logger.info("Player \(info.playerName) created game \(info.code)")
+        req.logger.info("Player \(info.name) created game \(info.roomCode)")
 
         return CreateGameResponseBody(
-            playerId: registration.playerId,
+            playerId: playerId,
             role: role.rawValue,
             playerName: playerName,
             code: code

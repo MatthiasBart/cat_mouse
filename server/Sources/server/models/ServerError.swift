@@ -15,6 +15,7 @@ enum ServerError: Int, Error, LocalizedError {
   case gameAlreadyStarted = 2003
   case forbidden = 2004
   case gameNotReady = 2005
+  case wsConnectionNotFound = 2006
 
   var errorDescription: String? {
     switch self {

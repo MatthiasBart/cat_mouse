@@ -8,3 +8,10 @@ struct ErrorMessage: ServerMessage {
     self.message = message
   }
 }
+
+extension ErrorMessage {
+  init(_ serverError: ServerError) {
+    self.code = serverError.rawValue
+    self.message = serverError.errorDescription ?? "Empty Message"
+  }
+}

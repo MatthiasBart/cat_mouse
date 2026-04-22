@@ -41,10 +41,9 @@ public func configure(_ app: Application) async throws {
   app.middleware.use(cors, at: .beginning)
   app.middleware.use(app.sessions.middleware)
 
-  let clientsService = ClientsService()  
-  let gamesService = GamesService()
+  let roomsService = RoomsService()
 
-  app.lifecycle.use(ShutdownHandler(clientsService: clientsService))
-  try app.register(collection: RestController(gamesService: gamesService, clientsService: clientsService))
-  try app.register(collection: WebSocketController(clientsService: clientsService, gamesService: gamesService))
+  app.lifecycle.use(ShutdownHandler(roomsService: roomsService))
+  try app.register(collection: RestController(roomsService: roomsService))
+  try app.register(collection: WebSocketController(roomsService: roomsService))
 }

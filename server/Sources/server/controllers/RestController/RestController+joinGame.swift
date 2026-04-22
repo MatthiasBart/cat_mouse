@@ -22,45 +22,27 @@ extension RestController {
         let role = try parseRole(from: playerRequest.role)
         let playerName = parsePlayerName(from: playerRequest.playerName)
 
-        let registration: GamesService.PlayerRegistration
         do {
-            registration = try await gameService.joinGame(
-                code: code, playerName: playerName, role: role)
-        } catch let error as GameError {
-            throw mapToAbort(error)
-        }
+            let playerId = try await roomsService.joinRoom(code: code, playerName: playerName, role: role)
 
         let info = PlayerInfo(
-            playerId: registration.playerId,
-            role: registration.role,
-            playerName: playerName,
+            id: playerId,
+            role: role,
+            name: playerName,
             code: code
         )
         info.save(to: req.session)
 
-        req.logger.info("Player \(info.playerName) joined game \(info.code)")
-
-        do {
-            let message = PlayerJoinedMessage(
-                code: code,
-                player: ConnectionInitMessage.PlayerInfo(
-                    playerId: registration.playerId,
-                    playerName: playerName,
-                    role: role,
-                    isCreator: true,
-                    isComputer: false
-                )
-            )
-            await clientsService.broadcast(message: message, in: code)
-        } catch {
-            req.logger.warning("Failed to broadcast PLAYER_JOINED for code \(code): \(error)")
-        }
+        req.logger.info("Player \(info.name) joined game \(info.roomCode)")
 
         return JoinGameResponseBody(
-            playerId: registration.playerId,
+            playerId: playerId,
             role: role.rawValue,
             playerName: playerName,
             code: code
         )
+        } catch let error as ServerError {
+            throw mapToAbort(error)
+        }
     }
 }
