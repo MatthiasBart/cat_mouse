@@ -42,22 +42,8 @@ extension WebSocketController {
         )
     )
 
-    try await setupListeners(for: playerInfo.id, in: playerInfo.roomCode)
-  }
-
-  func setupListeners(for player: Int64, in room: String) async throws {
-    guard let ws = await roomsService.getWS(of: player, in: room) else {
-        throw ServerError.wsConnectionNotFound
-    }
-
-    ws.onMessage({ ws, message in
-      if let move = message as? MoveMessage {
-          
-      } 
-    })  
-
     ws.onClose.whenComplete { [weak self] _ in
-      Task { await self?.roomsService.setWS(nil, for: player, in: room) }
+      Task { await self?.roomsService.setWS(nil, for: playerInfo.id, in: playerInfo.roomCode) }
     }
   }
 }

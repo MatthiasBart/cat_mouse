@@ -10,7 +10,7 @@ extension WebSocket {
     try await self.send(collection)
   }
 
-  func onMessage(_ callback: @escaping @Sendable (WebSocket, any ClientMessage) -> ()) {
+  func onMessage(_ callback: @escaping @Sendable (WebSocket, any ClientMessage) async throws -> ()) {
     let decoder = JSONDecoder()
     onText({ ws, text in
       guard
@@ -25,7 +25,7 @@ extension WebSocket {
       switch anyMessage.type {
         case .move:
                 let moveMessage = try decoder.decode(MoveMessage.self, from: data)
-                callback(ws, moveMessage)
+                try await callback(ws, moveMessage)
       }
     } catch {
         try? await ws.send(ErrorMessage(.invalidMessage))

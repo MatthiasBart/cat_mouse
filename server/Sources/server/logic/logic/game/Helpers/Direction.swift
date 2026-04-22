@@ -1,8 +1,8 @@
-public enum Direction: Decodable {
-    case up
-    case down
-    case left
-    case right
+public enum Direction: String {
+    case up = "UP"
+    case down = "DOWN"
+    case left = "LEFT"
+    case right = "RIGHT"
 
     func newPosition(position: Position) -> Position {
         var position = position

@@ -2,7 +2,7 @@ enum ClientMessageType: String, Codable {
   case move = "MOVE"
 }
 
-protocol ClientMessage: Decodable {
+protocol ClientMessage: Decodable, Sendable {
   var type: ClientMessageType { get }
 }
 
@@ -19,7 +19,7 @@ enum ServerMessageType: String, Codable {
   case error = "ERROR"
 }
 
-protocol ServerMessage: Encodable {
+protocol ServerMessage: Encodable, Sendable {
   var type: ServerMessageType { get }
 }
 

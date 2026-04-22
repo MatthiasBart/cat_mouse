@@ -2,8 +2,12 @@ import Foundation
 
 struct GameStateCalculator {
     let game: Game 
+
+    public init(game: Game) {
+        self.game = game
+    }
     
-    public func computeGameState(for id: Int64) throws -> Data {
+    public func computeGameState(for id: Int64) async throws -> Data {
         guard let player = game.players.first(where: { $0.id == id } ) else {
             throw GameError.playerNotExisting
         }

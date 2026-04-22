@@ -2,52 +2,34 @@ import Logic
 import Vapor
 
 actor RoomsService {
-  class Room {
-    var game: Game
-    var wsStore: [Int64: WebSocket]
-
-    init(game: Game, wsStore: [Int64: WebSocket] = [:]) {
-      self.game = game
-      self.wsStore = wsStore
-    }
-  }
-
   private var rooms: [String: Room] = [:]
 
-  func getWS(of player: Int64, in room: String) -> WebSocket? {
-      rooms[room]?.wsStore[player]
+  func getWS(of player: Int64, in room: String) async -> WebSocket? {
+      await rooms[room]?.wsStore[player]
   }
 
-  func setWS(_ ws: WebSocket?, for player: Int64, in room: String) {
-      rooms[room]?.wsStore[player] = ws
-  }
-
-  func clean(room roomCode: String) {
-    guard let room = rooms[roomCode] else {
-      return
+  func setWS(_ ws: WebSocket?, for player: Int64, in room: String) async {
+    if let ws {
+      await rooms[room]?.add(ws, for: player)
+    } else {
+      await rooms[room]?.deleteWS(for: player)
     }
-    for (_, ws) in room.wsStore {
-      _ = ws.close()
-    }
-
-    room.game.endGame()
-    rooms[roomCode] = nil
   }
 
-  func clean() {
+  func clean() async {
     for room in rooms {
-        clean(room: room.key)
+        await room.value.clean()
     }
   }
 
-  func createRoom(playerName: String, role: Role) -> (code: String, playerId: Int64) {
+  func createRoom(playerName: String, role: Role) async -> (code: String, playerId: Int64) {
     let code = UUID().uuidString
     let game = Game()
-    let room = Room(game: game)
+    let room = Room(game: game, code: code)
 
     rooms[code] = room
 
-    let playerId = addPlayer(to: room, name: playerName, role: role)
+    let playerId = await room.addPlayer(name: playerName, role: role)
 
     return (code, playerId)
   }
@@ -57,40 +39,16 @@ actor RoomsService {
       throw ServerError.gameNotFound
     }
 
-    let playerId = addPlayer(to: room, name: playerName, role: role)
-
-    for (_, ws) in room.wsStore {
-      try await ws.send(
-        PlayerJoinedMessage(
-          code: code,
-          player: .init(
-            playerId: playerId,
-            playerName: playerName,
-            role: role,
-            isCreator: false,
-            isComputer: false
-          )
-        )
-      )
-    }
+    let playerId = await room.addPlayer(name: playerName, role: role)
 
     return playerId
   }
 
-  func startGame(in room: String, playerId: Int64) throws {
+  func startGame(in room: String, playerId: Int64) async throws {
     guard let room = rooms[room] else {
       throw ServerError.gameNotFound
     }
 
-    room.game.startGame()
-  }
-
-  private func addPlayer(to room: Room, name: String, role: Role) -> Int64 {
-    switch role {
-    case .cat:
-      return room.game.addCat(name: name)
-    case .mouse:
-      return room.game.addMouse(name: name)
-    }
+    await room.startGame()
   }
 }
