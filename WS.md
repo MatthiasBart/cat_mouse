@@ -10,22 +10,22 @@ Both WS routes are protected by backend session middleware:
 
 ### Overview
 
-| Type           | Direction        | Link |
-| -------------- | ---------------- | ---- |
-| `CONNECTION_INIT` | Server -> Client |      |
-| `PLAYER_JOINED` | Server -> Client |      |
-| `GAME_INIT`    | Server -> Client |      |
-| `GAME_UPDATE`  | Server -> Client |      |
-| `CAUGHT`       | Server -> Client |      |
-| `VOTE_RESULT`  | Server -> Client |      |
-| `GAME_ENDED`   | Server -> Client |      |
-| `MOVE`         | Client -> Server |      |
-| `LEAVE_SUBWAY` | Client -> Server |      |
-| `ENTER_SUBWAY` | Client -> Server |      |
-| `START_VOTE`   | Client -> Server |      |
-| `LEAVE_GAME`   | Client -> Server |      |
-| `VOTE_DECISION` | Client -> Server |      |
-| `ERROR`        | Server -> Client |      |
+| Type           | Direction        | Link |Info |
+| -------------- | ---------------- | ---- |-----|
+| `CONNECTION_INIT` | Server -> Client |   | one time, from service |
+| `PLAYER_JOINED` | Server -> Client |     | one time (each join), from service |
+| `GAME_INIT`    | Server -> Client |      | ? |
+| `GAME_UPDATE`  | Server -> Client |      | every iteration of game loop, from room |
+| `CAUGHT`       | Server -> Client |      | once, from game |
+| `VOTE_RESULT`  | Server -> Client |      | |
+| `GAME_ENDED`   | Server -> Client |      ||
+| `MOVE`         | Client -> Server |      ||
+| `LEAVE_SUBWAY` | Client -> Server |      ||
+| `ENTER_SUBWAY` | Client -> Server |      ||
+| `START_VOTE`   | Client -> Server |      ||
+| `LEAVE_GAME`   | Client -> Server |      ||
+| `VOTE_DECISION` | Client -> Server |     ||
+| `ERROR`        | Server -> Client |      ||
 
 ### Server -> Clients
 

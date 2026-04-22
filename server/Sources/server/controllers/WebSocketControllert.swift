@@ -34,14 +34,6 @@ extension WebSocketController {
 
     await roomsService.setWS(ws, for: playerInfo.id, in: playerInfo.roomCode)
 
-    try await ws.send(
-      ConnectionInitMessage(
-        code: playerInfo.roomCode,
-        currentPlayerId: playerInfo.id,
-        players: []
-        )
-    )
-
     ws.onClose.whenComplete { [weak self] _ in
       Task { await self?.roomsService.setWS(nil, for: playerInfo.id, in: playerInfo.roomCode) }
     }

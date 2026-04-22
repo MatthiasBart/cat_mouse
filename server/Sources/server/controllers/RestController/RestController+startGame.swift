@@ -15,7 +15,7 @@ extension RestController {
         }
 
         do {
-            try await roomsService.startGame(in: code, playerId: info.id)
+            try await roomsService.rooms[code]?.startGame()
         } catch let error as ServerError {
             throw mapToAbort(error)
         }

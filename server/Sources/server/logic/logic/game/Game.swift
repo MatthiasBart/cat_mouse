@@ -76,6 +76,10 @@ public class Game {
         self.endTime = Date() + Game.duration
     }
 
+    public func leaveGame(player: Int64) {
+        players.removeAll(where: { $0.id == player })
+    }
+
     func createSubways() { 
         let numberOfExits = Int64(cats.count * 3)
         var numberOfExitsLeft = numberOfExits
@@ -138,19 +142,17 @@ public class Game {
 
 //MARK: subway
 extension Game { 
-    public func enter(exit: Int64, mouse: Int64) throws {
-        guard let exit = exits.first(where: { $0.id == exit }) else { 
+    public func enter(subway: Int64, mouse: Int64) throws {
+        guard let subway = subways.first(where: { $0.id == subway }) else { 
             throw GameError.noHoleFoundForID
         }
         guard let mouse = mice.first(where: { $0.id == mouse }) else {
             throw GameError.noMouseFoundForID
         }
 
-        if mouse.isNear(exit) {
-            mouse.subway = exit.subway.id
+        mouse.subway = subway.id
 
-            mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
-        }
+        mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
     }
 
     public func leave(exit: Int64, mouse: Int64) throws {
@@ -180,18 +182,22 @@ extension Game {
 
 //MARK: Voting
 extension Game {
-    public func startVoting(subway: Int64, manager: Int64) throws {
-        if let voting = votings[subway] { 
+    public func startVoting(manager: Int64) throws {
+        guard let mouse = mice.first(where: { $0.id == manager }) else { 
+            throw GameError.noMouseFoundForID
+        }
+
+        if mouse.subway == nil { 
+            throw GameError.mouseNotInSubway
+        }
+        
+        if let voting = votings[mouse.subway!] { 
             if !voting.isRunOut() {
                 throw GameError.votingAlreadyExists
             }
         }   
 
-        guard let mouse = mice.first(where: { $0.id == manager }) else { 
-            throw GameError.noMouseFoundForID
-        }
-        
-        votings[subway] = Voting(
+        votings[mouse.subway!] = Voting(
             endTime: Date() + Voting.duration,
             manager: mouse
         )

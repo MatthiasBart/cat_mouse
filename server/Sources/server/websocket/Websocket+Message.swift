@@ -24,8 +24,23 @@ extension WebSocket {
     do {
       switch anyMessage.type {
         case .move:
-                let moveMessage = try decoder.decode(MoveMessage.self, from: data)
-                try await callback(ws, moveMessage)
+          let moveMessage = try decoder.decode(MoveMessage.self, from: data)
+          try await callback(ws, moveMessage)
+        case .enterSubway:
+          let enterSubwayMessage = try decoder.decode(EnterSubwayMessage.self, from: data)
+          try await callback(ws, enterSubwayMessage)
+        case .leaveSubway:
+          let leaveSubwayMessage = try decoder.decode(LeaveSubwayMessage.self, from: data)
+          try await callback(ws, leaveSubwayMessage)
+        case .startVote:
+          let startVotingMessage = try decoder.decode(StartVotingMessage.self, from: data)
+          try await callback(ws, startVotingMessage)
+        case .leaveGame:
+          let leaveGameMessage = try decoder.decode(LeaveGameMessage.self, from: data)
+          try await callback(ws, leaveGameMessage)
+        case .voteDecision:
+          let voteDecisionMessage = try decoder.decode(VoteDecisionMessage.self, from: data)
+          try await callback(ws, voteDecisionMessage)
       }
     } catch {
         try? await ws.send(ErrorMessage(.invalidMessage))

@@ -48,8 +48,18 @@ actor Room {
     func reactTo(_ message: any ClientMessage, of player: Int64) throws {
         if let move = message as? MoveMessage {
             try game.move(player: player, .init(rawValue: move.direction.rawValue)!)
-        } else {
-
+        } else if let leave = message as? LeaveSubwayMessage {
+            try game.leave(exit: leave.exitId, mouse: player)
+        } else if let enter = message as? EnterSubwayMessage {
+            try game.enter(subway: enter.subwayId, mouse: player)
+        } else if let _ = message as? StartVotingMessage {
+            try game.startVoting(manager: player)
+        } else if let _ = message as? LeaveGameMessage {
+            game.leaveGame(player: player)
+            let _ = wsStore[player]?.close()
+            deleteWS(for: player)
+        } else if let vote = message as? VoteDecisionMessage {
+            try game.vote(subway: vote.target_subway_id_vote, mouse: player)
         }
     }
 
@@ -67,9 +77,9 @@ actor Room {
         let playerId: Int64
         switch role {
         case .cat:
-            playerId = await game.addCat(name: name)
+            playerId = game.addCat(name: name)
         case .mouse:
-            playerId = await game.addMouse(name: name)
+            playerId = game.addMouse(name: name)
         }
 
         try? await broadcast(
@@ -88,7 +98,7 @@ actor Room {
         return playerId
     }
 
-    func broadcast(_ message: ServerMessage) async throws {
+    func broadcast(_ message: any ServerMessage) async throws {
         for (_, ws) in wsStore {
             try await ws.send(
                 message

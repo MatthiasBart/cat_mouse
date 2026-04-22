@@ -2,7 +2,7 @@ import Logic
 import Vapor
 
 actor RoomsService {
-  private var rooms: [String: Room] = [:]
+  var rooms: [String: Room] = [:]
 
   func getWS(of player: Int64, in room: String) async -> WebSocket? {
       await rooms[room]?.wsStore[player]
@@ -10,7 +10,17 @@ actor RoomsService {
 
   func setWS(_ ws: WebSocket?, for player: Int64, in room: String) async {
     if let ws {
-      await rooms[room]?.add(ws, for: player)
+      if let room = rooms[room] {
+        await room.add(ws, for: player)
+
+        try? await ws.send(
+          ConnectionInitMessage(
+            code: room.code,
+            currentPlayerId: player,
+            players: []
+          )
+        )
+      }
     } else {
       await rooms[room]?.deleteWS(for: player)
     }
@@ -42,13 +52,5 @@ actor RoomsService {
     let playerId = await room.addPlayer(name: playerName, role: role)
 
     return playerId
-  }
-
-  func startGame(in room: String, playerId: Int64) async throws {
-    guard let room = rooms[room] else {
-      throw ServerError.gameNotFound
-    }
-
-    await room.startGame()
   }
 }
