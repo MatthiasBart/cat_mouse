@@ -1,5 +1,5 @@
 //
-// GameController.swift
+// RestController.swift
 // Holds the REST routes used to manage games,
 // e.g creating, joining and starting a game
 //
@@ -7,7 +7,7 @@
 import Vapor
 import Foundation
 
-protocol GameControllerProtocol {
+protocol RestControllerProtocol {
   /// Create a new game, returns game code
   func createGame(req: Request) async throws -> Response
 
@@ -18,7 +18,7 @@ protocol GameControllerProtocol {
   func updateGame(req: Request) async throws -> Response
 }
 
-struct GameController: RouteCollection {
+struct RestController: RouteCollection {
   private let manager: GamesService
   private let clientsService: ClientsService
 
@@ -42,7 +42,7 @@ struct GameController: RouteCollection {
 }
 
 // MARK: Implementation
-extension GameController: GameControllerProtocol {
+extension RestController: RestControllerProtocol {
   func createGame(req: Request) async throws -> Response {
     let playerRequest = try req.query.decode(PlayerRequest.self)
     let role = try parseRole(from: playerRequest.role)

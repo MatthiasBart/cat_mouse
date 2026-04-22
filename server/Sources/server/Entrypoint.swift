@@ -29,3 +29,22 @@ enum Entrypoint {
     try await app.asyncShutdown()
   }
 }
+
+public func configure(_ app: Application) async throws {
+
+    let cors = CORSMiddleware(configuration: .init(
+    allowedOrigin: .custom("http://localhost:5173"),
+    allowedMethods: [.GET, .POST, .PATCH, .OPTIONS],
+    allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith],
+    allowCredentials: true
+  ))
+  app.middleware.use(cors, at: .beginning)
+  app.middleware.use(app.sessions.middleware)
+
+  let clientsService = ClientsService()  
+  let gamesService = GamesService()
+
+  app.lifecycle.use(ShutdownHandler(clientsService: clientsService))
+  try app.register(collection: RestController(gamesService: gamesService, clientsService: clientsService))
+  try app.register(collection: WebSocketController(clientsService: clientsService, gamesService: gamesService))
+}

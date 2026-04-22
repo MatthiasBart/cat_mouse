@@ -1,11 +1,11 @@
 //
-// GameSocketController.swift
+// WebSocketController.swift
 // Holds the WS connection and message parsing logic
 //
 
 import Vapor
 
-protocol GameSocketControllerProtocol {
+protocol WebSocketControllerProtocol {
   /// Creates a player/client for the request and initializes the connection
   func connect(req: Request, ws: WebSocket)
 
@@ -13,7 +13,7 @@ protocol GameSocketControllerProtocol {
   func handleMessage(type: ClientMessageType, data: Data, playerID: UUID, req: Request) throws
 }
 
-struct GameSocketController: RouteCollection {
+struct WebSocketController: RouteCollection {
   let service: ClientsService
   let gamesService: GamesService
 
@@ -31,7 +31,7 @@ struct GameSocketController: RouteCollection {
   }
 }
 
-extension GameSocketController: GameSocketControllerProtocol {
+extension WebSocketController: WebSocketControllerProtocol {
   func connect(req: Request, ws: WebSocket) {
     guard let session = PlayerSession(req: req) else {
       req.logger.info("Connection rejected: Missing or invalid session.")

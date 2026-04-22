@@ -1,6 +1,6 @@
 import Vapor
 
-struct GameLifecycleHandler: LifecycleHandler {
+struct ShutdownHandler: LifecycleHandler {
   let clientsService: ClientsService
 
   func shutdown(_ application: Application) {
