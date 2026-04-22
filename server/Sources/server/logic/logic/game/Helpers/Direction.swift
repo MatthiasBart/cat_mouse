@@ -1,4 +1,4 @@
-public enum Direction: String {
+public enum Direction: String, Codable, Sendable {
     case up = "UP"
     case down = "DOWN"
     case left = "LEFT"
