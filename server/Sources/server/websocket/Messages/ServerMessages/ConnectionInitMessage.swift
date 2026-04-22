@@ -1,4 +1,4 @@
-struct ConnectionInit: ServerMessage {
+struct ConnectionInitMessage: ServerMessage {
   struct PlayerInfo: Codable {
     let playerId: Int64
     let playerName: String

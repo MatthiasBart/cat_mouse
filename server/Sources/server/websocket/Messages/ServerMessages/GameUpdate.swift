@@ -1,4 +1,4 @@
-struct GameUpdate: ServerMessage {
+struct GameUpdateMessage: ServerMessage {
   let type: ServerMessageType
   let seq: Int
   let time: Int
