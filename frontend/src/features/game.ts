@@ -47,7 +47,7 @@ export function handleGameUpdateMessage(
   ) => void,
 ) {
   setGameState((prevGame) => {
-    if (!prevGame) return prevGame;
+    //if (!prevGame) return prevGame;
 
     const mice = event.mice.filter(hasPosition).map((mouse) => ({
       id: mouse.id,

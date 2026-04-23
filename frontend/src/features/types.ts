@@ -1,5 +1,31 @@
 import type { Role } from "../types";
 
+export type ConnectionInitMessage = {
+  type: "CONNECTION_INIT";
+  code: string;
+  started: boolean;
+  currentPlayerId: number;
+  players: {
+    playerId: number;
+    playerName: string;
+    role: Role;
+    isCreator: boolean;
+    isComputer: boolean;
+  }[];
+};
+
+export type PlayerJoinedMessage = {
+  type: "PLAYER_JOINED";
+  code: string;
+  player: {
+    playerId: number;
+    playerName: string;
+    role: Role;
+    isCreator: boolean;
+    isComputer: boolean;
+  };
+};
+
 export type GameInitMessage = {
   type: "GAME_INIT";
   role: Role;

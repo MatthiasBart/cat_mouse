@@ -3,12 +3,14 @@ import "./app.css";
 import type { Game, Player, Role } from "./types";
 import type {
   CaughtMessage,
+  ConnectionInitMessage,
   GameInitMessage,
   GameUpdateMessage,
+  PlayerJoinedMessage,
   VoteResultMessage,
 } from "./features/types";
 import { renderGameField } from "./views/renderGame";
-import { renderButton } from "./views/renderMenus";
+import { renderButton } from "./views/renderComponents";
 import {
   handleCaughtMessage,
   handleGameInitMessage,
@@ -19,19 +21,22 @@ import {
   checkAutoEnterSubwayAsMouse,
   handlePlayerEnterSubway,
 } from "./features/subwayLogic";
+import { renderMainMenu } from "./views/MainMenu/renderMainMenu";
+import { RenderRoom } from "./views/Room/renderRoom";
 
 export function App() {
-  const [gameCode, setGameCode] = useState<string | null>(null);
-  const [gameCodeInput, setGameCodeInput] = useState("");
-  const [backendError, setBackendError] = useState<string | null>(null);
+  const [gameActive, setGameActive] = useState<"true" | "room" | "false">(
+    "false",
+  );
+  //const [gameCodeInput, setGameCodeInput] = useState("");
+  const [connectionInitResult, setConnectionInitResult] =
+    useState<ConnectionInitMessage | null>(null);
   const [gameState, setGameState] = useState<Game | null>(null);
   const [player, setPlayer] = useState<Player | null>(null);
   const [voteResult, setVoteResult] = useState<{
     winSubway: number;
     token: number;
   } | null>(null);
-
-  //const getNewStuff(stuff => renderGameField(stuff))
 
   const wsRef = useRef<WebSocket | null>(null);
   const lastAutoEnterKeyRef = useRef<string | null>(null);
@@ -43,6 +48,8 @@ export function App() {
     | GameUpdateMessage
     | VoteResultMessage
     | CaughtMessage
+    | ConnectionInitMessage
+    | PlayerJoinedMessage
     | null => {
     if (typeof rawMessage === "string") {
       try {
@@ -55,6 +62,8 @@ export function App() {
 
     if (typeof rawMessage === "object" && rawMessage !== null) {
       return rawMessage as
+        | ConnectionInitMessage
+        | PlayerJoinedMessage
         | CaughtMessage
         | GameInitMessage
         | GameUpdateMessage
@@ -64,36 +73,19 @@ export function App() {
     return null;
   };
 
-  const joinGame = async (gameCode: string, role: Role): Promise<string> => {
-    try {
-      setBackendError(null);
-      console.log("Joining game " + gameCode);
-      await fetch(
-        `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}?role=${role}`, // todo add role:
-        // joinGame and createGame also set the playerId, see REST.md
-        {
-          method: "POST",
-          credentials: "include",
-        },
-      );
-    } catch (error) {
-      console.error("Failed to create game:", error);
-      setBackendError("Failed: server running?");
-      throw error;
-    }
-
-    //console.log(response);
+  const onJoin = async (code: string): Promise<void> => {
+    setGameActive("room");
     console.log("opening websocket");
-    const socket = new WebSocket("ws://localhost:8080/games/ws");
+    const socket = new WebSocket(`ws://localhost:8080/games/${code}/ws`);
 
     socket.onopen = () => console.log("Connected to WebSocket server");
     socket.onmessage = (event: MessageEvent) => {
-      //const msg = JSON.parse(event.data);
-      //console.log("raw WS msg", msg);
       const serverMessage = parseServerMessage(event.data);
-      if (!serverMessage) return;
 
-      //console.log("onmessage:", serverMessage);
+      if (!serverMessage) return;
+      console.log(serverMessage.type + " WS msg");
+      console.log(event.data);
+
       switch (serverMessage.type) {
         case "GAME_INIT":
           handleGameInitMessage(serverMessage, setGameState, setPlayer);
@@ -113,22 +105,43 @@ export function App() {
             token: (prevResult?.token ?? 0) + 1,
           }));
           break;
+        case "CONNECTION_INIT":
+          setConnectionInitResult(serverMessage);
+          break;
+        case "PLAYER_JOINED":
+          console.log("[WS] PLAYER_JOINED");
+          //if (!connectionInitResult) break;
+          setConnectionInitResult((previousState) => {
+            if (!previousState) return previousState;
+
+            const alreadyKnown = previousState.players.some(
+              (player) => player.playerId === serverMessage.player.playerId,
+            );
+            if (alreadyKnown) return previousState;
+            return {
+              ...previousState,
+              players: [...previousState.players, serverMessage.player],
+            };
+          });
+          break;
       }
     };
     socket.onclose = () => console.log("Disconnected from WebSocket server");
     socket.onerror = (err) => console.error("WebSocket error:", err);
     wsRef.current = socket;
     wsRef.current = socket;
-    return gameCode;
   };
+  const onGameStarted = async (): Promise<void> => {
+    setGameActive("true");
+  };
+
   const exitGame = () => {
     wsRef.current?.close();
     wsRef.current = null;
-    setGameCode(null);
+    setGameActive("false");
   };
 
   useEffect(() => {}, [wsRef.current]);
-  useEffect(() => {}, [gameCode, gameState]);
 
   useEffect(() => {
     return () => wsRef.current?.close();
@@ -148,27 +161,6 @@ export function App() {
 
     return () => clearTimeout(timer);
   }, [voteResult]);
-
-  const createGame = async (): Promise<string> => {
-    try {
-      setBackendError(null);
-      // todo: it also auto-joins that game
-      const res = await fetch("http://localhost:8080/games", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to create game");
-      const data = await res.json(); // { role, playerName, code }
-      console.log("gamecode. " + data.code);
-      return data.code;
-    } catch (error) {
-      console.error("Failed to create game:", error);
-      setBackendError("Failed: server running?");
-      throw error;
-    }
-  };
-
-  // https://medium.com/@chaman388/websockets-in-reactjs-a-practical-guide-with-real-world-examples-2efe483ee150
 
   const handleVote = (subwayId: number) => {
     if (player?.role === "mouse" && gameState?.status === "caught") return;
@@ -198,7 +190,14 @@ export function App() {
   };
 
   useEffect(() => {
-    if (!gameCode || !gameState || !player) {
+    console.log("gameActive:", gameActive);
+    console.log("gameState:", gameState);
+    console.log("player:", player);
+  }, [gameActive, gameState, player]);
+
+  // Check if player should auto-enter a subway:
+  useEffect(() => {
+    if (!gameActive || !gameState || !player) {
       lastAutoEnterKeyRef.current = null;
       return;
     }
@@ -206,11 +205,18 @@ export function App() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     checkAutoEnterSubwayAsMouse(player, gameState, lastAutoEnterKeyRef, ws);
-  }, [gameCode, gameState, player?.role, player?.subway, player?.x, player?.y]);
+  }, [
+    gameActive,
+    gameState,
+    player?.role,
+    player?.subway,
+    player?.x,
+    player?.y,
+  ]);
 
   // catch keydown events for moving:
   useEffect(() => {
-    if (!gameCode) return;
+    if (!gameActive) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (
         e.key !== "ArrowUp" &&
@@ -268,145 +274,56 @@ export function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [gameCode, player, gameState?.status]);
-
-  // mock update message:
-  useEffect(() => {
-    if (!gameCode) return;
-
-    const mockGameUpdate: GameUpdateMessage = {
-      type: "GAME_UPDATE",
-      seq: 1,
-      timeLeft: 119,
-      player: {
-        id: 7,
-        name: "player",
-        role: "mouse",
-        subway: undefined,
-        position: undefined,
-      },
-      mice: [
-        {
-          id: 21,
-          name: "outside-mouse",
-          subway: undefined,
-          position: { x: 220, y: 120 },
-        },
-      ],
-      cats: [
-        {
-          id: 1,
-          name: "tom",
-          position: { x: 320, y: 220 },
-          type: "live",
-        },
-        {
-          id: 2,
-          name: "ghost-tom",
-          position: { x: 130, y: 240 },
-          type: "ghost",
-        },
-      ],
-      active_vote: undefined /* {
-        timeLeft: 15,
-        votes: [
-          { subwayId: 1, votes: 2 },
-          { subwayId: 2, votes: 3 },
-        ],
-      },*/,
-    };
-
-    const timer = setTimeout(
-      () => handleGameUpdateMessage(mockGameUpdate, setGameState, setPlayer),
-      1200,
-    );
-
-    return () => clearTimeout(timer);
-  }, [gameCode]);
-
-  // mock vote result message:
-  useEffect(() => {
-    if (!gameCode) return;
-
-    const mockVoteResult: VoteResultMessage = {
-      type: "VOTE_RESULT",
-      win_subway: 2,
-    };
-
-    const timer = setTimeout(() => {
-      setVoteResult((prevResult) => ({
-        winSubway: mockVoteResult.win_subway,
-        token: (prevResult?.token ?? 0) + 1,
-      }));
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [gameCode]);
-
-  // mock caught message: TODO remove
-  /*useEffect(() => {
-    if (!gameCode) return;
-    if (player?.role !== "mouse") return;
-
-    const mockCaught: CaughtMessage = {
-      type: "CAUGHT",
-    };
-
-    const timer = setTimeout(() => {
-      handleCaughtMessage(mockCaught, setGameState);
-    }, 30000);
-
-    return () => clearTimeout(timer);
-  }, [gameCode, player?.role]);*/
-
-  // mock init message:
-  useEffect(() => {
-    if (!gameCode) return;
-    // Mock data resembling a GAME_INIT message
-    const mockGameInit: GameInitMessage = {
-      type: "GAME_INIT",
-      role: "mouse",
-      fieldSize: {
-        width: 600,
-        height: 400,
-      },
-      playerPosition: { x: 50, y: 50 },
-      subways: [
-        {
-          id: 1,
-          name: "Red Line",
-          exits: [
-            { x: 100, y: 100 },
-            { x: 300, y: 200 },
-          ],
-        },
-        {
-          id: 2,
-          name: "Blue Line",
-          exits: [
-            { x: 400, y: 100 },
-            { x: 200, y: 350 },
-          ],
-        },
-      ],
-    };
-
-    // Call the handler with mock data to initialize game state
-    setTimeout(
-      () => handleGameInitMessage(mockGameInit, setGameState, setPlayer),
-      500,
-    );
-
-    // Only once per gameCode
-    // eslint-disable-next-line
-  }, [gameCode]);
+  }, [gameActive, player, gameState?.status]);
 
   return (
     <>
       <section id="center">
         <h1>Cat & Mouse</h1>
-        {gameCode && renderButton("Exit", exitGame)}
+        {/* Render the role selection screen. */}
+        {gameActive === "false" && renderMainMenu(onJoin)}
 
+        {/* Render a connection info. */}
+        {gameActive === "room" && !connectionInitResult && (
+          <p>Connecting to room...</p>
+        )}
+
+        {/* Render the joining room. */}
+        {gameActive === "room" && connectionInitResult && (
+          <RenderRoom
+            connectionInitResult={connectionInitResult}
+            onGameStarted={onGameStarted}
+          />
+        )}
+
+        {/* Render a loading info. */}
+        {!gameState && gameActive === "true" && <p> Loading Game ...</p>}
+
+        {/* Render the main game field. */}
+        {gameState &&
+          gameActive === "true" &&
+          player &&
+          renderGameField(
+            gameState,
+            player,
+            handleVote,
+            handleStartVote,
+            handleEnterSubway,
+          )}
+        {/* Render the Exit button at the bottom with spacing from above */}
+        {gameActive === "true" && (
+          <div
+            style={{
+              marginTop: "64px",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            {renderButton("Exit", exitGame)}
+          </div>
+        )}
+
+        {/* Render the voting result. */}
         {voteResult && (
           <div
             style={{
@@ -426,6 +343,8 @@ export function App() {
             )?.name ?? `#${voteResult.winSubway}`}
           </div>
         )}
+
+        {/* Render the caught message. */}
         {player?.role === "mouse" && gameState?.status === "caught" && (
           <div
             style={{
@@ -442,59 +361,6 @@ export function App() {
             You were caught. Spectating mode active.
           </div>
         )}
-        {backendError && (
-          <div
-            style={{
-              margin: "8px auto",
-              maxWidth: "420px",
-              padding: "8px 12px",
-              border: "1px solid #7f1d1d",
-              borderRadius: 8,
-              backgroundColor: "#fee2e2",
-              color: "#7f1d1d",
-              fontWeight: 600,
-            }}
-          >
-            {backendError}
-          </div>
-        )}
-        {gameState &&
-          gameCode &&
-          player &&
-          renderGameField(
-            gameState,
-            player,
-            handleVote,
-            handleStartVote,
-            handleEnterSubway,
-          )}
-        {!gameCode &&
-          renderButton("Create Game & Join (as cat)", async () => {
-            const gameCode = await joinGame(await createGame(), "cat");
-            setGameCode(gameCode);
-          })}
-        {!gameCode &&
-          renderButton("Create Game & Join (as mouse)", async () => {
-            const gameCode = await joinGame(await createGame(), "mouse");
-            setGameCode(gameCode);
-          })}
-        {!gameCode && (
-          <input
-            type="text"
-            placeholder="Enter Game Code"
-            value={gameCodeInput}
-            onInput={(e) =>
-              setGameCodeInput((e.target as HTMLInputElement).value)
-            }
-            style={{ margin: "8px", padding: "4px", fontSize: "1rem" }}
-          />
-        )}
-
-        {!gameCode &&
-          renderButton("Join Game (as cat)", async () => {
-            const gameCode = await joinGame(gameCodeInput, "cat");
-            setGameCode(gameCode);
-          })}
       </section>
 
       <section id="next-steps">
