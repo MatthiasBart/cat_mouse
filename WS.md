@@ -10,22 +10,22 @@ Both WS routes are protected by backend session middleware:
 
 ### Overview
 
-| Type           | Direction        | Link |
-| -------------- | ---------------- | ---- |
-| `CONNECTION_INIT` | Server -> Client |      |
-| `PLAYER_JOINED` | Server -> Client |      |
-| `GAME_INIT`    | Server -> Client |      |
-| `GAME_UPDATE`  | Server -> Client |      |
-| `CAUGHT`       | Server -> Client |      |
-| `VOTE_RESULT`  | Server -> Client |      |
-| `GAME_ENDED`   | Server -> Client |      |
-| `MOVE`         | Client -> Server |      |
-| `LEAVE_SUBWAY` | Client -> Server |      |
-| `ENTER_SUBWAY` | Client -> Server |      |
-| `START_VOTE`   | Client -> Server |      |
-| `LEAVE_GAME`   | Client -> Server |      |
-| `VOTE_DECISION` | Client -> Server |      |
-| `ERROR`        | Server -> Client |      |
+| Type           | Direction        | Link |Info |
+| -------------- | ---------------- | ---- |-----|
+| `CONNECTION_INIT` | Server -> Client |   | one time, from service |
+| `PLAYER_JOINED` | Server -> Client |     | one time (each join), from service, boradcast |
+| `GAME_INIT`    | Server -> Client |      | when game starts, from room |
+| `GAME_UPDATE`  | Server -> Client |      | every iteration of game loop, from room |
+| `CAUGHT`       | Server -> Client |      | once, from game via delegate |
+| `VOTE_RESULT`  | Server -> Client |      | when voting ends, delegate call |
+| `GAME_ENDED`   | Server -> Client |      | when game ends, |
+| `MOVE`         | Client -> Server |      ||
+| `LEAVE_SUBWAY` | Client -> Server |      ||
+| `ENTER_SUBWAY` | Client -> Server |      ||
+| `START_VOTE`   | Client -> Server |      ||
+| `LEAVE_GAME`   | Client -> Server |      ||
+| `VOTE_DECISION` | Client -> Server |     ||
+| `ERROR`        | Server -> Client |      ||
 
 ### Server -> Clients
 
@@ -138,7 +138,8 @@ When player joins a game as a cat:
     "name": "tom123",
     "role": "mouse" | "cat",
     "subway": 5 | undefined, // id of the subway if inside one
-    "position": { "x": 10, "y": 20 } | undefined // undefined if inside a subway
+    "position": { "x": 10, "y": 20 } | undefined, // undefined if inside a subway
+    "caught": number // cat: mice caught, mouse: 0 if alive, CatId when caught (of cat that caught you)
   },
   "mice":
     {
@@ -153,7 +154,6 @@ When player joins a game as a cat:
       "position": { "x": 5, "y": 5 }, // as mouse if outside or as cat
       "name": string,
       "type": "live" | "ghost" // live if actual player, ghost if it's the last known position of a cat when a mouse enters the same
-        // subway like the player.
     },
   }[],
   "active_vote": {
@@ -199,9 +199,10 @@ Message received if you voted for a subway and are in it:
   "player": {
     "id": 7,
     "name": "jerry123",
-    "type": "CAT"
+    "type": "CAT",
+    "caught": number | undefined, //if cat won
+    "timeOnSurface": number | undefined, //if mouse won
   },
-  "team": "CATS",
   "totalTime": 100000
 }
 ```
