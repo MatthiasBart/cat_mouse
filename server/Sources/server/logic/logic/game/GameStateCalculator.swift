@@ -28,11 +28,12 @@ struct GameStateCalculator: @unchecked Sendable {
                 .mice(game.mice.filter { $0.subway == subway })
                 .voting(game.votings[subway])
                 .player(mouse)
+                .cats(game.ghostCats[subway] ?? [])
                 .timeLeft((game.endTime ?? Date()).distance(to: Date()))
                 .build()
         } else {
             return try GameUpdateMessageBuilder()
-                .mice(game.mice.filter { $0.subway == nil })
+                .mice(game.mice.filter { $0.subway == nil && $0.caught == nil })
                 .cats(game.cats)
                 .player(mouse)
                 .timeLeft((game.endTime ?? Date()).distance(to: Date()))
@@ -42,7 +43,7 @@ struct GameStateCalculator: @unchecked Sendable {
 
     func gameState(for cat: Cat) throws -> GameUpdateMessage {
         return try GameUpdateMessageBuilder()
-            .mice(game.mice.filter { $0.subway == nil })
+            .mice(game.mice.filter { $0.subway == nil && $0.caught == nil })
             .cats(game.cats)
             .player(cat)
             .timeLeft((game.endTime ?? Date()).distance(to: Date()))

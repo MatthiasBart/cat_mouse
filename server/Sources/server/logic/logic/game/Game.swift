@@ -23,13 +23,14 @@ public class Game: @unchecked Sendable {
     var subways: [Subway]
     var exits: [Exit]
     var votings: [Subway.ID: Voting]
+    var ghostCats: [Subway.ID: [GhostCat]]
 
     var endTime: Date = Date()
 
     var creator: Int64 
     var winner: (any Player)?
 
-    var gameDelegate: GameDelegate? = nil
+    var gameDelegate: GameDelegate?
 
     var caughtMice: Int64 = 0
 
@@ -57,6 +58,7 @@ public class Game: @unchecked Sendable {
         exits = []
         votings = [:]
         creator = -1
+        ghostCats = [:]
     }
 
     public func addMouse(name: String) -> Int64{
@@ -81,12 +83,16 @@ public class Game: @unchecked Sendable {
             if voting.isRunOut() || miceInSub.count == voting.votes.count {
                 gameDelegate?.voteResult(voting.highestVotedSub(), for: miceInSub.map { $0.id })        
             }
+        }
 
             if caughtMice == mice.count {
                 endGame()                
                 endTime = Date()
             }
-        }
+
+            for (subway, ghostCatsForSub) in ghostCats {
+                ghostCats[subway] = ghostCatsForSub.filter({ $0.lastSeen > (Date().addingTimeInterval(-5))}) 
+            }
     }
 
     public func endGame() {
@@ -184,6 +190,8 @@ extension Game {
         guard let mouse = mice.first(where: { $0.id == mouse }) else {
             throw GameError.noMouseFoundForID
         }
+
+        ghostCats[subway.id] = cats.map{ GhostCat(from: $0) }
 
         mouse.subway = subway.id
 

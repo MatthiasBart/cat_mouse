@@ -1,3 +1,5 @@
+import Foundation 
+
 public class Cat: Player {
     public var id: Int64 = -1
     var name: String = ""
@@ -8,4 +10,13 @@ public class Cat: Player {
 
 class GhostCat: Cat {
     private var type = "ghost"
+    var lastSeen: Date = Date()
+
+    init(from cat: Cat) {
+        super.init()
+        self.id = cat.id
+        self.name = cat.name
+        self.position = cat.position
+        self.lastSeen = Date()
+    }
 }

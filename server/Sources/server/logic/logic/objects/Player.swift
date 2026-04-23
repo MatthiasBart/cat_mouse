@@ -11,19 +11,22 @@ class PlayerDTO: Player {
         var role: String
         var subway: Int64?
         var position: Position
+        var caught: Int64
 
         init(
                 id: Int64, 
                 name: String, 
                 role: String, 
                 subway: Int64?,
-                position: Position
+                position: Position,
+                caught: Int64
             ) {
             self.id = id 
                 self.name = name
                 self.role = role
                 self.subway = subway
                 self.position = position
+                self.caught = caught
         }
 
         convenience init(cat: Cat) { 
@@ -32,7 +35,8 @@ class PlayerDTO: Player {
             name: cat.name,
             role: "cat",
             subway: nil,
-            position: cat.position
+            position: cat.position,
+            caught: Int64(cat.caught.count)
         )
         }
 
@@ -42,7 +46,8 @@ class PlayerDTO: Player {
             name: mouse.name,
             role: "mouse",
             subway: mouse.subway,
-            position: mouse.position
+            position: mouse.position, 
+            caught: mouse.caught ?? 0
         )
         }
 }

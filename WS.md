@@ -138,7 +138,8 @@ When player joins a game as a cat:
     "name": "tom123",
     "role": "mouse" | "cat",
     "subway": 5 | undefined, // id of the subway if inside one
-    "position": { "x": 10, "y": 20 } | undefined // undefined if inside a subway
+    "position": { "x": 10, "y": 20 } | undefined, // undefined if inside a subway
+    "caught": number // cat: mice caught, mouse: 0 if alive, CatId when caught (of cat that caught you)
   },
   "mice":
     {
@@ -153,7 +154,6 @@ When player joins a game as a cat:
       "position": { "x": 5, "y": 5 }, // as mouse if outside or as cat
       "name": string,
       "type": "live" | "ghost" // live if actual player, ghost if it's the last known position of a cat when a mouse enters the same
-        // subway like the player.
     },
   }[],
   "active_vote": {
