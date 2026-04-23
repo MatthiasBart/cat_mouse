@@ -13,13 +13,25 @@ enum GameError: Error {
     case notPermittedToEndVoting
 }
 
-public class Game {
+protocol GameDelegate { 
+    func gotCaught(_ mouse: Int64)
+    func voteResult(_ subway: Int64, for mice: [Mouse.ID])
+}
+
+public class Game: @unchecked Sendable {
     var players: [any Player]
     var subways: [Subway]
     var exits: [Exit]
     var votings: [Subway.ID: Voting]
 
-    var endTime: Date? = nil
+    var endTime: Date = Date()
+
+    var creator: Int64 
+    var winner: (any Player)?
+
+    var gameDelegate: GameDelegate? = nil
+
+    var caughtMice: Int64 = 0
 
     var cats: [Cat] { 
         players.compactMap {
@@ -44,6 +56,7 @@ public class Game {
         subways = []
         exits = []
         votings = [:]
+        creator = -1
     }
 
     public func addMouse(name: String) -> Int64{
@@ -62,9 +75,29 @@ public class Game {
         return cat.id
     }
 
+    public func checkGameState() { 
+        for (subway, voting) in votings {
+            let miceInSub = mice.filter({ $0.subway == subway })
+            if voting.isRunOut() || miceInSub.count == voting.votes.count {
+                gameDelegate?.voteResult(voting.highestVotedSub(), for: miceInSub.map { $0.id })        
+            }
+
+            if caughtMice == mice.count {
+                endGame()                
+                endTime = Date()
+            }
+        }
+    }
+
     public func endGame() {
         for mouse in mice { 
             mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
+        }
+
+        if caughtMice == mice.count {
+            winner = cats.max(by: { $0.caught.count < $1.caught.count })
+        } else {
+            winner = mice.max(by: { $0.totalTimeOnSurface < $1.totalTimeOnSurface })         
         }
     }
 
@@ -131,9 +164,11 @@ public class Game {
 
         if let cat = player as? Cat {
             for mouse in mice.filter({ $0.subway == nil }) {
-               if cat.position.isNear(mouse.position) {
+               if cat.position.isNear(mouse.position) && mouse.caught == nil {
                    cat.caught.append(mouse.id)
                    mouse.caught = cat.id
+                   caughtMice += 1
+                   gameDelegate?.gotCaught(mouse.id)
                }
             }
         }

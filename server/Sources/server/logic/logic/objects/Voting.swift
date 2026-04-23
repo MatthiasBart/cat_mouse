@@ -11,6 +11,30 @@ class Voting {
         self.votes = votes
         self.manager = manager
     }
+
+    func highestVotedSub() -> Int64 {
+        var voteCounts: [Subway.ID: Int64] = [:]
+        for (mouse, subway) in votes {
+            if let count = voteCounts[subway] { 
+                voteCounts[subway] = count + 1
+            } else { 
+                voteCounts[subway] = 1
+            }
+        }
+
+        var highestVotedSubway: Int64 = -1
+        for (sub, count) in voteCounts {
+            if highestVotedSubway == -1 { 
+                highestVotedSubway = sub
+            } else {
+                if count > voteCounts[highestVotedSubway]! {
+                   highestVotedSubway = sub 
+                }
+            }
+        }
+
+        return highestVotedSubway
+    }
 }
 
 extension Voting: Encodable {

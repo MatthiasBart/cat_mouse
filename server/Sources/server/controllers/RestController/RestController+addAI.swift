@@ -11,23 +11,20 @@ extension RestController {
             throw Abort(.badRequest, reason: "Game code is missing")
         }
 
-        guard let info = PlayerInfo(from: req.session) else {
+        guard let playerInfo = PlayerInfo(from: req.session) else {
             throw Abort(.unauthorized, reason: "Missing or invalid session")
         }
 
-        guard info.roomCode == code else {
+        guard playerInfo.roomCode == code else {
             throw Abort(.forbidden, reason: "Session does not belong to this game")
         }
 
         let playerRequest = try req.query.decode(AddAIRequestQuery.self)
         let role = try parseRole(from: playerRequest.role)
-
-        // do {
-        //     try await gameService.ensureCreatorCanManageAI(
-        //         code: code, requesterPlayerId: info.playerId)
-        // } catch let error as GameError {
-        //     throw mapToAbort(error)
-        // }
+        
+        if await roomsService.rooms[code]?.game.creator != playerInfo.id {
+           throw Abort(.forbidden, reason: "Only game creators can add AI processes") 
+        }
 
         do {
             try spawnAIProcess(logger: req.logger, code: code, role: role)

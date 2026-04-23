@@ -13,12 +13,12 @@ Both WS routes are protected by backend session middleware:
 | Type           | Direction        | Link |Info |
 | -------------- | ---------------- | ---- |-----|
 | `CONNECTION_INIT` | Server -> Client |   | one time, from service |
-| `PLAYER_JOINED` | Server -> Client |     | one time (each join), from service |
-| `GAME_INIT`    | Server -> Client |      | ? |
+| `PLAYER_JOINED` | Server -> Client |     | one time (each join), from service, boradcast |
+| `GAME_INIT`    | Server -> Client |      | when game starts, from room |
 | `GAME_UPDATE`  | Server -> Client |      | every iteration of game loop, from room |
-| `CAUGHT`       | Server -> Client |      | once, from game |
-| `VOTE_RESULT`  | Server -> Client |      | |
-| `GAME_ENDED`   | Server -> Client |      ||
+| `CAUGHT`       | Server -> Client |      | once, from game via delegate |
+| `VOTE_RESULT`  | Server -> Client |      | when voting ends, delegate call |
+| `GAME_ENDED`   | Server -> Client |      | when game ends, |
 | `MOVE`         | Client -> Server |      ||
 | `LEAVE_SUBWAY` | Client -> Server |      ||
 | `ENTER_SUBWAY` | Client -> Server |      ||
@@ -199,9 +199,10 @@ Message received if you voted for a subway and are in it:
   "player": {
     "id": 7,
     "name": "jerry123",
-    "type": "CAT"
+    "type": "CAT",
+    "caught": number | undefined, //if cat won
+    "timeOnSurface": number | undefined, //if mouse won
   },
-  "team": "CATS",
   "totalTime": 100000
 }
 ```

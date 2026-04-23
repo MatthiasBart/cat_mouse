@@ -1,5 +1,5 @@
-class Cat: Player {
-    var id: Int64 = -1
+public class Cat: Player {
+    public var id: Int64 = -1
     var name: String = ""
     var position: Position = .base
     var caught: [Mouse.ID] = []

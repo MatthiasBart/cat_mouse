@@ -1,6 +1,22 @@
 import Logic
 import Vapor
 
+extension Room: @preconcurrency GameDelegate {
+    func gotCaught(_ mouse: Int64) {
+        if let ws = wsStore[mouse] {
+            Task { try? await ws.send(CaughtMessage()) }
+        }
+    }
+
+    func voteResult(_ subway: Int64, for mice: [Mouse.ID]) {
+        for (player, ws) in wsStore { 
+            if mice.contains(player) {
+                Task { try? await ws.send(VoteResultMessage(win_subway: subway)) }
+            }
+        }
+    }
+}
+
 actor Room {
     let game: Game
     var wsStore: [Int64: WebSocket]
@@ -11,15 +27,20 @@ actor Room {
         self.game = game
         self.wsStore = wsStore
         self.code = code
+        self.game.gameDelegate = self
     }
 
     func startGame() {
         gameTask = Task {
-            while true {
+            game.startGame()
+
+            while game.endTime > Date() {
                 try? await Task.sleep(for: .milliseconds(100))
                 if Task.isCancelled {
                     break
                 }
+
+                game.checkGameState()
 
                 for (player, ws) in wsStore {
                     if let updateMessage = try? await GameStateCalculator(game: game)
@@ -28,6 +49,21 @@ actor Room {
                         try? await ws.send(updateMessage)
                     }
                 }
+            }
+
+            game.endGame()
+
+            if let winner = game.winner {
+            try? await broadcast(GameEndedMessage(
+                player: .init(
+                    id: winner.id,
+                    name: winner.name,
+                    type: winner is Cat ? "CAT" : "MOUSE",
+                    caught: (winner as? Cat).map { Int64($0.caught.count) },
+                    timeOnSurface: (winner as? Mouse).map { Int64($0.totalTimeOnSurface) }
+                ),
+                totalTime: Int64(Game.duration)
+            ))
             }
         }
     }
@@ -80,6 +116,10 @@ actor Room {
             playerId = game.addCat(name: name)
         case .mouse:
             playerId = game.addMouse(name: name)
+        }
+
+        if game.players.count == 1 {
+            game.creator = playerId
         }
 
         try? await broadcast(

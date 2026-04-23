@@ -1,7 +1,1 @@
-- understand GameService
-- understand Clientservice
-- understand WebSocketController and RestController
-- rewrite GameService and Clientservice
-- add websocket messages
-- connect websocket messages to game methods,  based on session or url get game code, based on session get userid, then make command with userid to game based on ws message
 - maybe prohibit that exits can spawn next to each other 
