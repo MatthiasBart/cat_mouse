@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 
 enum GameError: Error {
     case gameAlreadyExists
@@ -12,6 +13,8 @@ enum GameError: Error {
     case mouseNotInSubway
     case notPermittedToEndVoting
 }
+
+private let logger = Logger(label: "Game")
 
 protocol GameDelegate { 
     func gotCaught(_ mouse: Int64)
@@ -30,7 +33,7 @@ public class Game: @unchecked Sendable {
     var creator: Int64 
     var winner: (any Player)?
 
-    var gameDelegate: GameDelegate?
+    var gameDelegate: (any GameDelegate)?
 
     var caughtMice: Int64 = 0
 
@@ -53,6 +56,7 @@ public class Game: @unchecked Sendable {
     static let duration: TimeInterval = 300
 
     public init() {
+        logger.info("created")
         players = []
         subways = []
         exits = []
@@ -62,6 +66,7 @@ public class Game: @unchecked Sendable {
     }
 
     public func addMouse(name: String) -> Int64{
+        logger.info("\(name) as mouse added")
         let mouse = Mouse()
         mouse.name = name
         mouse.id = Int64(UUID().hashValue)
@@ -70,6 +75,7 @@ public class Game: @unchecked Sendable {
     }
 
     public func addCat(name: String) -> Int64 {
+        logger.info("\(name) as cat added")
         let cat = Cat()
         cat.name = name
         cat.id = Int64(UUID().hashValue)
@@ -81,14 +87,21 @@ public class Game: @unchecked Sendable {
         for (subway, voting) in votings {
             let miceInSub = mice.filter({ $0.subway == subway })
             if voting.isRunOut() || miceInSub.count == voting.votes.count {
-                gameDelegate?.voteResult(voting.highestVotedSub(), for: miceInSub.map { $0.id })        
+                let miceInSubIds = miceInSub.map { $0.id }
+                let votingResult = voting.highestVotedSub()
+                logger.info("voteResult in \(subway) result \(votingResult) for mice \(miceInSubIds)")
+                gameDelegate?.voteResult(votingResult, for: miceInSubIds)        
+                votings[subway] = nil
             }
         }
 
             if caughtMice == mice.count {
+                logger.info("all mice caught, ending game")
                 endGame()                
                 endTime = Date()
             }
+
+            //TODO add check if all mice are in same subway to win
 
             for (subway, ghostCatsForSub) in ghostCats {
                 ghostCats[subway] = ghostCatsForSub.filter({ $0.lastSeen > (Date().addingTimeInterval(-5))}) 
@@ -99,7 +112,7 @@ public class Game: @unchecked Sendable {
         for mouse in mice { 
             mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
         }
-
+        logger.info("setting winner")
         if caughtMice == mice.count {
             winner = cats.max(by: { $0.caught.count < $1.caught.count })
         } else {
@@ -108,6 +121,7 @@ public class Game: @unchecked Sendable {
     }
 
     public func startGame() {
+        logger.info("starting game")
         createSubways()
 
         positionPlayers()
@@ -116,6 +130,7 @@ public class Game: @unchecked Sendable {
     }
 
     public func leaveGame(player: Int64) {
+        logger.info("removing player \(player)")
         players.removeAll(where: { $0.id == player })
     }
 
@@ -143,10 +158,13 @@ public class Game: @unchecked Sendable {
             numberOfExitsLeft -= exitsForSubway
             id += 1
         }
+
+        logger.info("created \(subways.count) subways with \(exits.count) exits")
     }
 
     func positionPlayers() {
         let numberOfSubways = Int64(subways.count)
+        logger.info("position players")
         for player in players {
             if let mouse = player as? Mouse {
                 mouse.subway = Int64.random(in: 0...numberOfSubways)
@@ -162,9 +180,12 @@ public class Game: @unchecked Sendable {
             throw GameError.playerNotExisting
         }
 
+
         let newPosition = direction
                 .newPosition(position: player.position)
                 .inRange()
+
+        logger.info("player \(player) moved \(direction.rawValue) to \(newPosition)")
 
         player.position = newPosition
 
@@ -174,6 +195,7 @@ public class Game: @unchecked Sendable {
                    cat.caught.append(mouse.id)
                    mouse.caught = cat.id
                    caughtMice += 1
+                   logger.info("mouse \(mouse.id) caugth by \(cat.id)")
                    gameDelegate?.gotCaught(mouse.id)
                }
             }
@@ -195,6 +217,8 @@ extension Game {
 
         mouse.subway = subway.id
 
+        logger.info("mouse \(mouse) entered sub \(subway)")
+
         mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
     }
 
@@ -212,11 +236,15 @@ extension Game {
             mouse.lastExit = Date()
         }
 
+        logger.info("mouse \(mouse) left sub \(exit.subway) via exit \(exit)")
+
         //when manager mouse leaves, assign new manager to voting
         if let (subway, voting) = votings.first(where: { $1.manager.id == mouse.id }) {
             if let firstMouseInSubway = mice.filter({ $0.subway == subway }).first {
                 voting.manager = firstMouseInSubway
+                logger.info("new manager \(firstMouseInSubway) for voting in sub \(subway)")
             } else {
+                logger.info("voting ended since left mouse was only one")
                 voting.endTime = Date()
             }
         }
@@ -239,6 +267,8 @@ extension Game {
                 throw GameError.votingAlreadyExists
             }
         }   
+
+        logger.info("voting started by \(manager)")
 
         votings[mouse.subway!] = Voting(
             endTime: Date() + Voting.duration,
@@ -263,9 +293,11 @@ extension Game {
             throw GameError.votingNotValid
         }
 
+        logger.info("\(mouse.id) voted for \(subway)")
         voting.votes[mouse.id] = subway
 
         if voting.votes.count == mice.filter({ $0.subway == subway }).count {
+            logger.info("all mice in sub \(mouse.subway ?? -1) voted for sub \(subway)")
             voting.endTime = Date()
         }
     }
@@ -282,6 +314,8 @@ extension Game {
         guard mouse.id == voting.manager.id else {
             throw GameError.notPermittedToEndVoting
         }
+
+        logger.info("voting in sub \(subway) got canceled by \(manager)")
 
         voting.endTime = Date() //TODO add way to flag as canceled
     }

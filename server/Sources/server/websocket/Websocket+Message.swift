@@ -1,5 +1,7 @@
 import Vapor 
 
+private let logger = Logger(label: "Websocket")
+
 extension WebSocket {
   func send(_ message: any ServerMessage) async throws {
     let encoder = JSONEncoder()
@@ -7,6 +9,7 @@ extension WebSocket {
     guard let collection = String(data: data, encoding: .utf8) else {
         throw ServerError.invalidMessage
     }
+      logger.info("sending \(message): \(collection) to \(self)")
     try await self.send(collection)
   }
 
@@ -20,6 +23,8 @@ extension WebSocket {
         try? await ws.send(ErrorMessage(.invalidMessage))
         return 
       }
+
+      logger.info("received \(anyMessage.type) on \(self)")
 
     do {
       switch anyMessage.type {

@@ -1,6 +1,8 @@
 import Logic
 import Vapor
 
+private let logger = Logger(label: "RoomsService")
+
 actor RoomsService {
   var rooms: [String: Room] = [:]
 
@@ -12,7 +14,7 @@ actor RoomsService {
     if let ws {
       if let room = rooms[room] {
         await room.add(ws, for: player)
-
+        logger.info("sending connection init to \(player) in \(room)")
         try? await ws.send(
           ConnectionInitMessage(
             code: room.code,
@@ -27,6 +29,7 @@ actor RoomsService {
   }
 
   func clean() async {
+      logger.critical("All rooms get cleaned")
     for room in rooms {
         await room.value.clean()
     }
@@ -41,6 +44,8 @@ actor RoomsService {
 
     let playerId = await room.addPlayer(name: playerName, role: role)
 
+    logger.info("room \(room) from \(playerName) with id \(playerId) created")
+
     return (code, playerId)
   }
 
@@ -50,6 +55,8 @@ actor RoomsService {
     }
 
     let playerId = await room.addPlayer(name: playerName, role: role)
+
+    logger.info("\(playerName) joined \(room) and got \(playerId)")
 
     return playerId
   }

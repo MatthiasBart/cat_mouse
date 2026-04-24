@@ -1,6 +1,8 @@
 import Logic
 import Vapor
 
+private let logger = Logger(label: "Room")
+
 extension Room: @preconcurrency GameDelegate {
     func gotCaught(_ mouse: Int64) {
         if let ws = wsStore[mouse] {
@@ -33,7 +35,7 @@ actor Room {
     func startGame() {
         gameTask = Task {
             game.startGame()
-
+            logger.info("game loop started \(self.code)")
             while game.endTime > Date() {
                 try? await Task.sleep(for: .milliseconds(100))
                 if Task.isCancelled {
@@ -50,7 +52,7 @@ actor Room {
                     }
                 }
             }
-
+            logger.info("game loop stopped \(self.code)")
             game.endGame()
 
             if let winner = game.winner {
@@ -104,6 +106,7 @@ actor Room {
     }
 
     func clean() {
+        logger.critical("cleaning \(code)")
         for (_, ws) in wsStore {
             _ = ws.close()
         }
@@ -120,6 +123,9 @@ actor Room {
 
         if game.players.count == 1 {
             game.creator = playerId
+            logger.info("creator \(name) joined with \(playerId)")
+        } else {
+            logger.info("player \(name) joined with \(playerId)")
         }
 
         try? await broadcast(
