@@ -47,7 +47,7 @@ export function handleGameUpdateMessage(
   ) => void,
 ) {
   setGameState((prevGame) => {
-    if (!prevGame) return prevGame;
+    //if (!prevGame) return prevGame;
 
     const mice = event.mice.filter(hasPosition).map((mouse) => ({
       id: mouse.id,
@@ -66,8 +66,14 @@ export function handleGameUpdateMessage(
     }));
 
     return {
-      ...prevGame,
-      status: prevGame.status,
+      //...prevGame,
+      status: prevGame?.status ?? "ongoing",
+      subways: event.subways ?? prevGame?.subways ?? [],
+      fieldSize: event.fieldSize ??
+        prevGame?.fieldSize ?? {
+          width: 800,
+          height: 600,
+        },
       seq: event.seq,
       timeLeft: event.timeLeft,
       activeVote: event.active_vote,
@@ -77,14 +83,17 @@ export function handleGameUpdateMessage(
   });
 
   setPlayer((prevPlayer) => {
-    if (!prevPlayer) return prevPlayer;
-
-    const previousPosition = {
-      x: prevPlayer.x,
-      y: prevPlayer.y,
+    const nextPosition = event.player.position ?? {
+      x: prevPlayer?.x ?? 0,
+      y: prevPlayer?.y ?? 0,
     };
 
-    const nextPosition = event.player.position ?? previousPosition;
+    /*const previousPosition = {
+      x: prevPlayer.x,
+      y: prevPlayer.y,
+    };*/
+
+    //const nextPosition = event.player.position ?? previousPosition;
 
     return {
       ...prevPlayer,

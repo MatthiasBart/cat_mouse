@@ -7,25 +7,24 @@ Both WS routes are protected by backend session middleware:
 - Missing/invalid session -> rejected (`401 Unauthorized`)
 - `/games/{code}/ws` with code not matching session game code -> rejected (`403 Forbidden`)
 
-
 ### Overview
 
-| Type           | Direction        | Link |Info |
-| -------------- | ---------------- | ---- |-----|
-| `CONNECTION_INIT` | Server -> Client |   | one time, from service |
-| `PLAYER_JOINED` | Server -> Client |     | one time (each join), from service, boradcast |
-| `GAME_INIT`    | Server -> Client |      | when game starts, from room |
-| `GAME_UPDATE`  | Server -> Client |      | every iteration of game loop, from room |
-| `CAUGHT`       | Server -> Client |      | once, from game via delegate |
-| `VOTE_RESULT`  | Server -> Client |      | when voting ends, delegate call |
-| `GAME_ENDED`   | Server -> Client |      | when game ends, |
-| `MOVE`         | Client -> Server |      ||
-| `LEAVE_SUBWAY` | Client -> Server |      ||
-| `ENTER_SUBWAY` | Client -> Server |      ||
-| `START_VOTE`   | Client -> Server |      ||
-| `LEAVE_GAME`   | Client -> Server |      ||
-| `VOTE_DECISION` | Client -> Server |     ||
-| `ERROR`        | Server -> Client |      ||
+| Type              | Direction        | Link | Info                                          |
+| ----------------- | ---------------- | ---- | --------------------------------------------- |
+| `CONNECTION_INIT` | Server -> Client |      | one time, from service                        |
+| `PLAYER_JOINED`   | Server -> Client |      | one time (each join), from service, boradcast |
+| `GAME_INIT`       | Server -> Client |      | when game starts, from room                   |
+| `GAME_UPDATE`     | Server -> Client |      | every iteration of game loop, from room       |
+| `CAUGHT`          | Server -> Client |      | once, from game via delegate                  |
+| `VOTE_RESULT`     | Server -> Client |      | when voting ends, delegate call               |
+| `GAME_ENDED`      | Server -> Client |      | when game ends,                               |
+| `MOVE`            | Client -> Server |      |                                               |
+| `LEAVE_SUBWAY`    | Client -> Server |      |                                               |
+| `ENTER_SUBWAY`    | Client -> Server |      |                                               |
+| `START_VOTE`      | Client -> Server |      |                                               |
+| `LEAVE_GAME`      | Client -> Server |      |                                               |
+| `VOTE_DECISION`   | Client -> Server |      |                                               |
+| `ERROR`           | Server -> Client |      |                                               |
 
 ### Server -> Clients
 
@@ -156,10 +155,23 @@ When player joins a game as a cat:
       "type": "live" | "ghost" // live if actual player, ghost if it's the last known position of a cat when a mouse enters the same
     },
   }[],
+  "fieldSize": { "width": 600, "height": 450 },
   "active_vote": {
     "timeLeft": "15", // in seconds // optional?
     "votes": {"subwayId": 5, "votes": 5}[] // current results of all tunnels
-  }
+  },
+    "subways": [
+    {
+      "id": 0,
+      "exits": [
+        {
+          "id": 0,
+          "x": 120,
+          "y": 80
+        }
+      ]
+    }
+  ],
 }
 ```
 

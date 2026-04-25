@@ -13,6 +13,29 @@ class GameUpdateMessageBuilder {
         return self
     }
 
+    func subways(_ subways: [Subway], exits: [Exit]) -> Self {
+    message.subways = subways.map { subway in
+        GameUpdateSubwayDTO(
+            id: subway.id,
+            exits: exits
+                .filter { $0.subway.id == subway.id }
+                .map {
+                    GameUpdateExitDTO(
+                        id: $0.id,
+                        x: $0.position.x,
+                        y: $0.position.y
+                    )
+                }
+        )
+    }
+        return self
+    }
+
+    func fieldSize(width: Int64, height: Int64) -> Self {
+    message.fieldSize = GameUpdateFieldSizeDTO(width: width, height: height)
+    return self
+}
+
     func player(_ player: any Player) -> Self {
         if let cat = player as? Cat {
             message.player = PlayerDTO(cat: cat)

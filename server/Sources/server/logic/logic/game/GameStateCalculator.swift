@@ -44,6 +44,8 @@ struct GameStateCalculator: @unchecked Sendable {
     func gameState(for cat: Cat) throws -> GameUpdateMessage {
         return try GameUpdateMessageBuilder()
             .mice(game.mice.filter { $0.subway == nil && $0.caught == nil })
+            .subways(game.subways, exits: game.exits)
+            .fieldSize(width: Position.MAX_X, height: Position.MAX_Y)
             .cats(game.cats)
             .player(cat)
             .timeLeft((game.endTime ?? Date()).distance(to: Date()))

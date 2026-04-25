@@ -89,12 +89,14 @@ export function App() {
       switch (serverMessage.type) {
         case "GAME_INIT":
           handleGameInitMessage(serverMessage, setGameState, setPlayer);
+          setGameActive("true");
           break;
         case "GAME_UPDATE":
           if (!serverMessage.mice) {
             return;
           }
           handleGameUpdateMessage(serverMessage, setGameState, setPlayer);
+          setGameActive("true");
           break;
         case "CAUGHT":
           handleCaughtMessage(serverMessage, setGameState);
@@ -131,14 +133,25 @@ export function App() {
     wsRef.current = socket;
     wsRef.current = socket;
   };
+
   const onGameStarted = async (): Promise<void> => {
     setGameActive("true");
   };
 
+  // Exit room/game functionality, as used by "onExitRoom" and main exit button
   const exitGame = () => {
     wsRef.current?.close();
     wsRef.current = null;
+    setConnectionInitResult(null);
+    setGameState(null);
+    setPlayer(null);
+    setVoteResult(null);
     setGameActive("false");
+  };
+
+  // Provide onExitRoom for RenderRoom (room phase), just closes and resets as above
+  const onExitRoom = (): void => {
+    exitGame();
   };
 
   useEffect(() => {}, [wsRef.current]);
@@ -232,10 +245,19 @@ export function App() {
       e.preventDefault();
       const ws = wsRef.current;
       if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+      const directionByKey: Record<string, "UP" | "DOWN" | "LEFT" | "RIGHT"> = {
+        ArrowUp: "UP",
+        ArrowDown: "DOWN",
+        ArrowLeft: "LEFT",
+        ArrowRight: "RIGHT",
+      };
+      const direction = directionByKey[e.key];
+
       ws.send(
         JSON.stringify({
           type: "MOVE",
-          test: e.key,
+          direction,
         }),
       );
 
@@ -293,6 +315,7 @@ export function App() {
           <RenderRoom
             connectionInitResult={connectionInitResult}
             onGameStarted={onGameStarted}
+            onExitRoom={onExitRoom}
           />
         )}
 

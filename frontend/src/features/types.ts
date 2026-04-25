@@ -74,6 +74,18 @@ export type GameUpdateMessage = {
         votes: { subwayId: number; votes: number }[]; // current results for all tunnels
       }
     | undefined;
+  fieldSize?: {
+    width: number;
+    height: number;
+  };
+  subways?: {
+    id: number;
+    exits: {
+      id: number;
+      x: number;
+      y: number;
+    }[];
+  }[];
 };
 
 export type VoteResultMessage = {

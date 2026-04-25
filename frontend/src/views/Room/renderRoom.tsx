@@ -16,9 +16,11 @@ export type RoomPlayer = {
 export function RenderRoom({
   connectionInitResult,
   onGameStarted,
+  onExitRoom,
 }: {
   connectionInitResult: ConnectionInitMessage;
   onGameStarted: () => void;
+  onExitRoom: () => void;
 }) {
   const [addingAI, setAddingAI] = useState<boolean>(false);
   const [aiRole, setAIRole] = useState<Role | null>(null);
@@ -66,6 +68,11 @@ export function RenderRoom({
     }
   };
 
+  // New: Handler for exit room
+  const handleExitRoom = () => {
+    if (onExitRoom) onExitRoom();
+  };
+
   return (
     <section class="room-card">
       <div class="room-header">
@@ -76,6 +83,14 @@ export function RenderRoom({
           }
         >
           Copy Code
+        </button>
+        <button
+          type="button"
+          class="exit-room-btn"
+          style={{ marginLeft: "1rem" }}
+          onClick={handleExitRoom}
+        >
+          Exit Room
         </button>
       </div>
 
@@ -117,7 +132,12 @@ export function RenderRoom({
           <button
             type="button"
             onClick={() => onStartGame(connectionInitResult.code)}
-            disabled={starting}
+            disabled={
+              starting ||
+              !connectionInitResult.players.some(
+                (p) => p.role.toLowerCase() === "mouse",
+              )
+            }
           >
             {starting ? "Starting..." : "Start Game"}
           </button>

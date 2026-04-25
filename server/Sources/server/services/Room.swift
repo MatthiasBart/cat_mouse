@@ -135,7 +135,7 @@ actor Room {
                     playerId: playerId,
                     playerName: name,
                     role: role,
-                    isCreator: false,
+                    isCreator: game.creator == playerId,
                     isComputer: false
                 )
             )
@@ -143,6 +143,18 @@ actor Room {
 
         return playerId
     }
+
+    func playerInfos() -> [ConnectionInitMessage.PlayerInfo] {
+    game.players.map { player in
+        ConnectionInitMessage.PlayerInfo(
+            playerId: player.id,
+            playerName: player.name,
+            role: player is Cat ? .cat : .mouse,
+            isCreator: game.creator == player.id,
+            isComputer: false
+        )
+    }
+}
 
     func broadcast(_ message: any ServerMessage) async throws {
         for (_, ws) in wsStore {

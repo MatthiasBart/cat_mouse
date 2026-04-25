@@ -15,11 +15,15 @@ actor RoomsService {
       if let room = rooms[room] {
         await room.add(ws, for: player)
         logger.info("sending connection init to \(player) in \(room)")
+
+        let players = await room.playerInfos()
+
+
         try? await ws.send(
           ConnectionInitMessage(
             code: room.code,
             currentPlayerId: player,
-            players: []
+            players: players
           )
         )
       }
