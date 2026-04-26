@@ -143,8 +143,8 @@ type CaughtMessage struct {
 	Type string `json:"type"`
 }
 
-// VoteResultServerMessage represents a VOTE_RESULT server message.
-type VoteResultServerMessage struct {
+// VoteResultMessage represents a VOTE_RESULT server message.
+type VoteResultMessage struct {
 	Type      string `json:"type"`
 	WinSubway int64  `json:"win_subway"`
 }

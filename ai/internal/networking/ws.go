@@ -2,28 +2,13 @@ package networking
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/websocket"
 )
-
-type WSEnvelope struct {
-	Type string `json:"type"`
-}
-
-// WSHandlers contains callbacks for incoming WebSocket message types.
-type WSHandlers struct {
-	OnConnectionInit func(ConnectionInitMessage)
-	OnPlayerJoined   func(PlayerJoinedMessage)
-	OnGameInit       func(GameInitMessage)
-	OnGameUpdate     func(GameUpdateMessage)
-	OnCaught         func(CaughtMessage)
-	OnVoteResult     func(VoteResultServerMessage)
-	OnGameEnded      func(GameEndedMessage)
-	OnError          func(ErrorMessage)
-}
 
 // Connection is the shared active WebSocket connection.
 var Connection *websocket.Conn
@@ -52,130 +37,58 @@ func ConnectWS(baseUrl *url.URL, code string) {
 	log.Printf("ws connected")
 }
 
-// ReadLoop reads incoming WebSocket messages and dispatches them to handlers.
-func ReadLoop(handlers WSHandlers) {
-	for {
-		_, data, err := Connection.ReadMessage()
-		if err != nil {
-			log.Fatal("ws read failed:", err)
-		}
+// ReadMessageWithType reads one message from the shared connection and returns its type and raw data.
+func ReadMessageWithType() (string, []byte, error) {
+	_, data, err := Connection.ReadMessage()
+	if err != nil {
+		return "", nil, err
+	}
 
-		var peek WSEnvelope
-		err = json.Unmarshal(data, &peek)
-		if err == nil && peek.Type != "" {
-			log.Printf("received websocket message type: %s", peek.Type)
-			switch peek.Type {
-			case "CONNECTION_INIT":
-				if handlers.OnConnectionInit != nil {
-					var msg ConnectionInitMessage
-					if err := json.Unmarshal(data, &msg); err != nil {
-						log.Printf("decode CONNECTION_INIT: %v", err)
-						continue
-					}
-					handlers.OnConnectionInit(msg)
-				}
-			case "PLAYER_JOINED":
-				if handlers.OnPlayerJoined != nil {
-					var msg PlayerJoinedMessage
-					if err := json.Unmarshal(data, &msg); err != nil {
-						log.Printf("decode PLAYER_JOINED: %v", err)
-						continue
-					}
-					handlers.OnPlayerJoined(msg)
-				}
-			case "GAME_INIT":
-				if handlers.OnGameInit != nil {
-					var msg GameInitMessage
-					if err := json.Unmarshal(data, &msg); err != nil {
-						log.Printf("decode GAME_INIT: %v", err)
-						continue
-					}
-					handlers.OnGameInit(msg)
-				}
-			case "GAME_UPDATE":
-				if handlers.OnGameUpdate != nil {
-					var msg GameUpdateMessage
-					if err := json.Unmarshal(data, &msg); err != nil {
-						log.Printf("decode GAME_UPDATE: %v", err)
-						continue
-					}
-					handlers.OnGameUpdate(msg)
-				}
-			case "CAUGHT":
-				if handlers.OnCaught != nil {
-					var msg CaughtMessage
-					if err := json.Unmarshal(data, &msg); err != nil {
-						log.Printf("decode CAUGHT: %v", err)
-						continue
-					}
-					handlers.OnCaught(msg)
-				}
-			case "VOTE_RESULT":
-				if handlers.OnVoteResult != nil {
-					var msg VoteResultServerMessage
-					if err := json.Unmarshal(data, &msg); err != nil {
-						log.Printf("decode VOTE_RESULT: %v", err)
-						continue
-					}
-					handlers.OnVoteResult(msg)
-				}
-			case "GAME_ENDED":
-				if handlers.OnGameEnded != nil {
-					var msg GameEndedMessage
-					if err := json.Unmarshal(data, &msg); err != nil {
-						log.Printf("decode GAME_ENDED: %v", err)
-						continue
-					}
-					handlers.OnGameEnded(msg)
-				}
-			case "ERROR":
-				if handlers.OnError != nil {
-					var msg ErrorMessage
-					if err := json.Unmarshal(data, &msg); err != nil {
-						log.Printf("decode ERROR: %v", err)
-						continue
-					}
-					handlers.OnError(msg)
-				}
-			}
-		}
+	var peek struct {
+		Type string `json:"type"`
+	}
+	err = json.Unmarshal(data, &peek)
+	if peek.Type != "" {
+		return peek.Type, data, nil
+	} else {
+		return "", nil, fmt.Errorf("message missing type field")
 	}
 }
 
-// sendClientMessage sends one client message over the shared connection.
-func sendClientMessage(msg any) {
+// sendMessage sends one client message over the shared connection.
+func sendMessage(msg any) {
 	if err := Connection.WriteJSON(msg); err != nil {
-		log.Printf("ws write failed: %v", err)
+		log.Printf("WSERROR: %v", err)
 		return
 	}
 }
 
 // SendMove sends a MOVE command.
 func SendMove(dir string) {
-	sendClientMessage(MoveMessage{Type: "MOVE", Direction: dir})
+	sendMessage(MoveMessage{Type: "MOVE", Direction: dir})
 }
 
 // SendEnterSubway sends an ENTER_SUBWAY command.
 func SendEnterSubway(subwayID int64) {
-	sendClientMessage(EnterSubwayMessage{Type: "ENTER_SUBWAY", SubwayID: subwayID})
+	sendMessage(EnterSubwayMessage{Type: "ENTER_SUBWAY", SubwayID: subwayID})
 }
 
 // SendLeaveSubway sends a LEAVE_SUBWAY command.
 func SendLeaveSubway(exitID int64) {
-	sendClientMessage(LeaveSubwayMessage{Type: "LEAVE_SUBWAY", ExitID: exitID})
+	sendMessage(LeaveSubwayMessage{Type: "LEAVE_SUBWAY", ExitID: exitID})
 }
 
 // SendStartVote sends a START_VOTE command.
 func SendStartVote() {
-	sendClientMessage(StartVoteMessage{Type: "START_VOTE"})
+	sendMessage(StartVoteMessage{Type: "START_VOTE"})
 }
 
 // SendLeaveGame sends a LEAVE_GAME command.
 func SendLeaveGame() {
-	sendClientMessage(LeaveGameMessage{Type: "LEAVE_GAME"})
+	sendMessage(LeaveGameMessage{Type: "LEAVE_GAME"})
 }
 
 // SendVoteDecision sends a VOTE_DECISION command.
 func SendVoteDecision(subwayID int64) {
-	sendClientMessage(VoteDecisionMessage{Type: "VOTE_DECISION", TargetSubwayIDVote: subwayID})
+	sendMessage(VoteDecisionMessage{Type: "VOTE_DECISION", TargetSubwayIDVote: subwayID})
 }
