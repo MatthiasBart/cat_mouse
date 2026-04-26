@@ -175,8 +175,7 @@ public class Game: @unchecked Sendable {
         logger.info("position players")
         for player in players {
             if let mouse = player as? Mouse {
-                mouse.subway = nil //  Int64.random(in: 0...numberOfSubways)
-                mouse.position = .random
+                mouse.subway = Int64.random(in: 0...numberOfSubways)
             } else if player is Cat {
                 player.position = .random
             }
