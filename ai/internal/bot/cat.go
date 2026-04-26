@@ -31,20 +31,24 @@ func processGameUpdateForCat(gameUpdateMessage *networking.GameUpdateMessage) {
 	var target point
 	hasTarget := false
 	minDist := 1e9
-	for _, mouse := range State.current_mice {
-		d := squaredDistance(State.position, mouse)
-		if d < minDist {
-			minDist = d
-			target = mouse
-			hasTarget = true
+
+	if len(State.current_mice) > 0 {
+		for _, mouse := range State.current_mice {
+			d := squaredDistance(State.position, mouse)
+			if d < minDist {
+				minDist = d
+				target = mouse
+				hasTarget = true
+			}
 		}
-	}
-	for _, mouse := range State.remembered_mice {
-		d := squaredDistance(State.position, mouse)
-		if d < minDist {
-			minDist = d
-			target = mouse
-			hasTarget = true
+	} else {
+		for _, mouse := range State.remembered_mice {
+			d := squaredDistance(State.position, mouse)
+			if d < minDist {
+				minDist = d
+				target = mouse
+				hasTarget = true
+			}
 		}
 	}
 	if !hasTarget {
