@@ -27,13 +27,16 @@ func newState() *catState {
 func processGameUpdateForCat(gameUpdateMessage *networking.GameUpdateMessage) {
 	updateState(gameUpdateMessage)
 	// find either closest mouse or closest remembered mouse, and move toward it
+	// prioritize mouse on surface, only move toward remembered position if no mouse on surface
 	var target point
+	hasTarget := false
 	minDist := 1e9
 	for _, mouse := range State.current_mice {
 		d := squaredDistance(State.position, mouse)
 		if d < minDist {
 			minDist = d
 			target = mouse
+			hasTarget = true
 		}
 	}
 	for _, mouse := range State.remembered_mice {
@@ -41,7 +44,11 @@ func processGameUpdateForCat(gameUpdateMessage *networking.GameUpdateMessage) {
 		if d < minDist {
 			minDist = d
 			target = mouse
+			hasTarget = true
 		}
+	}
+	if !hasTarget {
+		return
 	}
 	moveToward(State.position, target)
 }
@@ -55,14 +62,25 @@ func updateState(gameUpdate *networking.GameUpdateMessage) {
 		}
 	}
 
+	prevMice := State.current_mice
+	State.current_mice = make(map[int64]point)
+
 	for _, mouse := range gameUpdate.Mice {
 		if mouse.Position != nil {
-			State.current_mice[mouse.ID] = point{
+			p := point{
 				X: float64(mouse.Position.X),
 				Y: float64(mouse.Position.Y),
 			}
+			State.current_mice[mouse.ID] = p
+			delete(State.remembered_mice, mouse.ID)
 		}
 		// else the mouse entered hole,
 		// therefore last position is remembered
+	}
+
+	for id, p := range prevMice {
+		if _, stillVisible := State.current_mice[id]; !stillVisible {
+			State.remembered_mice[id] = p
+		}
 	}
 }

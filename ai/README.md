@@ -40,6 +40,7 @@ go build . && ./game-ai --code="ABCDEFG" --role="cat" --name="ai-bot"
     1. Mouses on the surfaces (received from server)
     2. Last seen holes positions (see memory behavior)
   - Runs to nearest mouse (1) or hole (2) based on the euclidean distance, if its at a hole, just waits there
+  - Only runs to holes if no mouse on surface anymore (because mouse could have esaped already)
 
 - actions
   - always catch mouse if touched
