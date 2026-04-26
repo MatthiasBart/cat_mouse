@@ -47,6 +47,14 @@ func processGameUpdateForCat(gameUpdateMessage *networking.GameUpdateMessage) {
 }
 
 func updateState(gameUpdate *networking.GameUpdateMessage) {
+	if gameUpdate.Player.Position != nil {
+		// cat should always have a position, but check just in case
+		State.position = point{
+			X: float64(gameUpdate.Player.Position.X),
+			Y: float64(gameUpdate.Player.Position.Y),
+		}
+	}
+
 	for _, mouse := range gameUpdate.Mice {
 		if mouse.Position != nil {
 			State.current_mice[mouse.ID] = point{
