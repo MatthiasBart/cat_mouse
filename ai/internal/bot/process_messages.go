@@ -2,9 +2,9 @@ package bot
 
 import (
 	"encoding/json"
-	"game-ai/internal/args"
 	"game-ai/internal/networking"
 	"log"
+	"strings"
 )
 
 func ProcessGameError(data *[]byte) {
@@ -55,9 +55,9 @@ func ProcessPlayerJoined(data *[]byte) {
 func ProcessGameUpdate(data *[]byte) {
 	var msg networking.GameUpdateMessage
 	if err := json.Unmarshal(*data, &msg); err == nil {
-		switch msg.Player.Role {
+		switch strings.ToLower(msg.Player.Role) {
 		case "mouse":
-			panic("unimplemented")
+			processGameUpdateForMouse(&msg)
 		case "cat":
 			processGameUpdateForCat(&msg)
 		default:
@@ -70,14 +70,4 @@ func ProcessGameUpdate(data *[]byte) {
 
 func ProcessConnectionInit(data *[]byte) {
 	// currently not needed
-}
-
-// private helper functions
-
-func isCat() bool {
-	return args.Role == "CAT"
-}
-
-func isMouse() bool {
-	return args.Role == "MOUSE"
 }
