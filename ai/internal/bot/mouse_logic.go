@@ -1,6 +1,5 @@
 package bot
 
-
 // RunMouseLogic executes one mouse tick.
 // TODO: implement mouse strategy from README (no voting for now).
 func RunMouseLogic() {

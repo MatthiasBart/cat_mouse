@@ -13,6 +13,7 @@ type WSEnvelope struct {
 	Type string `json:"type"`
 }
 
+// WSHandlers contains callbacks for incoming WebSocket message types.
 type WSHandlers struct {
 	OnConnectionInit func(ConnectionInitMessage)
 	OnPlayerJoined   func(PlayerJoinedMessage)
@@ -24,8 +25,10 @@ type WSHandlers struct {
 	OnError          func(ErrorMessage)
 }
 
+// Connection is the shared active WebSocket connection.
 var Connection *websocket.Conn
 
+// ConnectWS opens the WebSocket connection for a game code.
 func ConnectWS(baseUrl *url.URL, code string) {
 	if client == nil {
 		log.Fatal("http client is not initialized")
@@ -49,8 +52,7 @@ func ConnectWS(baseUrl *url.URL, code string) {
 	log.Printf("ws connected")
 }
 
-// receive messages
-
+// ReadLoop reads incoming WebSocket messages and dispatches them to handlers.
 func ReadLoop(handlers WSHandlers) {
 	for {
 		_, data, err := Connection.ReadMessage()
@@ -140,8 +142,7 @@ func ReadLoop(handlers WSHandlers) {
 	}
 }
 
-// send messages
-
+// sendClientMessage sends one client message over the shared connection.
 func sendClientMessage(msg any) {
 	if err := Connection.WriteJSON(msg); err != nil {
 		log.Printf("ws write failed: %v", err)
@@ -149,26 +150,32 @@ func sendClientMessage(msg any) {
 	}
 }
 
+// SendMove sends a MOVE command.
 func SendMove(dir string) {
 	sendClientMessage(MoveMessage{Type: "MOVE", Direction: dir})
 }
 
+// SendEnterSubway sends an ENTER_SUBWAY command.
 func SendEnterSubway(subwayID int64) {
 	sendClientMessage(EnterSubwayMessage{Type: "ENTER_SUBWAY", SubwayID: subwayID})
 }
 
+// SendLeaveSubway sends a LEAVE_SUBWAY command.
 func SendLeaveSubway(exitID int64) {
 	sendClientMessage(LeaveSubwayMessage{Type: "LEAVE_SUBWAY", ExitID: exitID})
 }
 
+// SendStartVote sends a START_VOTE command.
 func SendStartVote() {
 	sendClientMessage(StartVoteMessage{Type: "START_VOTE"})
 }
 
+// SendLeaveGame sends a LEAVE_GAME command.
 func SendLeaveGame() {
 	sendClientMessage(LeaveGameMessage{Type: "LEAVE_GAME"})
 }
 
+// SendVoteDecision sends a VOTE_DECISION command.
 func SendVoteDecision(subwayID int64) {
 	sendClientMessage(VoteDecisionMessage{Type: "VOTE_DECISION", TargetSubwayIDVote: subwayID})
 }

@@ -1,3 +1,4 @@
+// Package bot stores runtime AI state and role-specific decision procedures.
 package bot
 
 import (
@@ -49,7 +50,7 @@ type aiState struct {
 	LastVoteResult *int64
 }
 
-// Global state
+// State is the shared in-memory AI state.
 var State = newAIState()
 
 type stateSnapshot struct {
@@ -71,12 +72,14 @@ func newAIState() *aiState {
 	}
 }
 
+// SetRole sets the bot role in shared state.
 func SetRole(role string) {
 	State.mu.Lock()
 	defer State.mu.Unlock()
 	State.Role = strings.ToUpper(strings.TrimSpace(role))
 }
 
+// SaveConnectionInit saves fields from a CONNECTION_INIT message.
 func SaveConnectionInit(msg *networking.ConnectionInitMessage) {
 	if msg == nil {
 		return
@@ -92,6 +95,7 @@ func SaveConnectionInit(msg *networking.ConnectionInitMessage) {
 	State.GameStarted = msg.Started
 }
 
+// SaveGameInit saves fields from a GAME_INIT message.
 func SaveGameInit(msg *networking.GameInitMessage) {
 	if msg == nil {
 		return
@@ -111,6 +115,7 @@ func SaveGameInit(msg *networking.GameInitMessage) {
 	}
 }
 
+// SaveGameUpdate saves fields from a GAME_UPDATE message and updates simple memory.
 func SaveGameUpdate(msg *networking.GameUpdateMessage) {
 	if msg == nil {
 		return
@@ -166,6 +171,7 @@ func SaveGameUpdate(msg *networking.GameUpdateMessage) {
 	State.LastSeenMice = currentVisible
 }
 
+// SaveVoteResult saves fields from a VOTE_RESULT message.
 func SaveVoteResult(msg *networking.VoteResultServerMessage) {
 	if msg == nil {
 		return

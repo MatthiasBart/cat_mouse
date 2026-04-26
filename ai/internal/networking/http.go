@@ -1,3 +1,4 @@
+// Package networking handles REST and WebSocket communication with the game server.
 package networking
 
 import (
@@ -11,6 +12,7 @@ import (
 
 var client *http.Client
 
+// InitApiClient initializes the shared HTTP client and cookie jar.
 func InitApiClient() {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -20,6 +22,7 @@ func InitApiClient() {
 	client = &http.Client{Jar: jar, Timeout: 10 * time.Second}
 }
 
+// JoinGame joins a game via REST and persists session cookies in the shared client.
 func JoinGame(baseUrl *url.URL, code, name, role string) {
 	if client == nil {
 		log.Fatal("http client is not initialized")

@@ -1,3 +1,4 @@
+// Package args parses and validates command-line arguments.
 package args
 
 import (
@@ -12,6 +13,7 @@ var Code string
 var Name string
 var Role string
 
+// ParseAndValidate parses CLI flags, validates values, and stores them in package globals.
 func ParseAndValidate() {
 	name := flag.String("name", "ai-bot", "bot player name")
 	code := flag.String("code", "", "game code for join mode")
