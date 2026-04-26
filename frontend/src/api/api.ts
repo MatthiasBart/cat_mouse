@@ -1,9 +1,9 @@
 import type { Role } from "../types";
 
-export const joinGame = async (gameCode: string, role: Role): Promise<void> => {
+export const joinGame = async (name: string, gameCode: string, role: Role): Promise<void> => {
   console.log("Joining game " + gameCode);
   const response = await fetch(
-    `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent("playerName")}&role=${role}`,
+    `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent(name)}&role=${role}`,
     {
       method: "POST",
       credentials: "include",
