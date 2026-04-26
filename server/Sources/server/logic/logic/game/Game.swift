@@ -101,7 +101,12 @@ public class Game: @unchecked Sendable {
                 endTime = Date()
             }
 
-            //TODO add check if all mice are in same subway to win
+            let firstSubway = mice.firstNonNil({ $0.subway })
+            if mice.allSatisfy { $0.subway == firstSubway } { 
+                logger.info("all mice in same subway, ending game")
+                endGame()
+                endTime = Date()
+            }
 
             for (subway, ghostCatsForSub) in ghostCats {
                 ghostCats[subway] = ghostCatsForSub.filter({ $0.lastSeen > (Date().addingTimeInterval(-5))}) 
@@ -110,8 +115,11 @@ public class Game: @unchecked Sendable {
 
     public func endGame() {
         for mouse in mice { 
-            mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
+            if mouse.subway != nil {
+                mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
+            }
         }
+        
         logger.info("setting winner")
         if caughtMice == mice.count {
             winner = cats.max(by: { $0.caught.count < $1.caught.count })
@@ -318,6 +326,6 @@ extension Game {
 
         logger.info("voting in sub \(subway) got canceled by \(manager)")
 
-        voting.endTime = Date() //TODO add way to flag as canceled
+        voting.endTime = Date() //TODO add way to flag as canceledtodo
     }
 }
