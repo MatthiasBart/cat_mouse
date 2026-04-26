@@ -2,6 +2,7 @@ package bot
 
 import (
 	"encoding/json"
+	"game-ai/internal/args"
 	"game-ai/internal/networking"
 	"log"
 )
@@ -48,18 +49,20 @@ func ProcessGameInit(data *[]byte) {
 }
 
 func ProcessPlayerJoined(data *[]byte) {
-	var msg networking.PlayerJoinedMessage
-	if err := json.Unmarshal(*data, &msg); err == nil {
-		panic("unimplemented")
-	} else {
-		log.Printf("decode PLAYER_JOINED: %v", err)
-	}
+	// currently not needed
 }
 
 func ProcessGameUpdate(data *[]byte) {
 	var msg networking.GameUpdateMessage
 	if err := json.Unmarshal(*data, &msg); err == nil {
-		panic("unimplemented")
+		switch msg.Player.Role {
+		case "mouse":
+			panic("unimplemented")
+		case "cat":
+			processGameUpdateForCat(&msg)
+		default:
+			log.Printf("unknown player role %q in GAME_UPDATE", msg.Player.Role)
+		}
 	} else {
 		log.Printf("decode GAME_UPDATE: %v", err)
 	}
@@ -67,4 +70,14 @@ func ProcessGameUpdate(data *[]byte) {
 
 func ProcessConnectionInit(data *[]byte) {
 	// currently not needed
+}
+
+// private helper functions
+
+func isCat() bool {
+	return args.Role == "CAT"
+}
+
+func isMouse() bool {
+	return args.Role == "MOUSE"
 }
