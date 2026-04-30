@@ -1,4 +1,3 @@
-import Logic
 import Vapor
 
 private let logger = Logger(label: "Room")

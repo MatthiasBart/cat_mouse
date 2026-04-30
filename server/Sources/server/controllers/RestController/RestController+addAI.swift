@@ -37,8 +37,8 @@ extension RestController {
     }
 
     private func spawnAIProcess(logger: Logger, code: String, role: Role) throws {
-        // NOTE: make sure the binary is built
-        let aiBinaryPath = "../ai/game-ai"
+        let rawPath = ProcessInfo.processInfo.environment["AI_BINARY_PATH"] ?? "../ai/game-ai"
+        let aiBinaryPath = URL(fileURLWithPath: rawPath, relativeTo: URL(fileURLWithPath: FileManager.default.currentDirectoryPath, isDirectory: true)).standardized.path
         let roleArgument: String
 
         switch role {
