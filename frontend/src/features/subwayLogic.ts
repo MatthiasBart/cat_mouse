@@ -28,8 +28,8 @@ export function findNearbySubwayId(player: Player, gameState: Game): number | un
       typeof s.id !== "undefined" &&
       s.exits.some(
         (exit) =>
-          Math.abs(exit.x - player.x) <= 11 &&
-          Math.abs(exit.y - player.y) <= 11,
+          Math.abs(exit.x - player.x) <= 20 &&
+          Math.abs(exit.y - player.y) <= 20,
       ),
   );
   return subway?.id;
