@@ -216,7 +216,7 @@ const renderNameTag = (name: string): JSX.Element => (
 );
 
 const renderPlayer = (player: Player, fieldSize: { width: number; height: number }): JSX.Element => {
-  const isOutside = player.role === "mouse" && !player.subway;
+  const isOutside = player.role === "mouse" && player.subway === undefined;
   const left = typeof player.subway !== "undefined" ? fieldSize.width / 2 : player.x;
   const top = typeof player.subway !== "undefined" ? fieldSize.height / 2 : player.y;
   return (
