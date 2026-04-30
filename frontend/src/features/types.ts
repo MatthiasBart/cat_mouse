@@ -38,6 +38,7 @@ export type GameInitMessage = {
     id: number;
     name: string;
     exits: {
+      id: number;
       x: number;
       y: number;
     }[];

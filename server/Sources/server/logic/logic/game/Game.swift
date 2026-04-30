@@ -101,8 +101,8 @@ public class Game: @unchecked Sendable {
                 endTime = Date()
             }
 
-            let firstSubway = mice.firstNonNil({ $0.subway })
-            if mice.allSatisfy { $0.subway == firstSubway } { 
+            let firstSubway = mice.filter { $0.caught == nil }.firstNonNil({ $0.subway })
+            if mice.allSatisfy({ $0.subway == firstSubway }) && firstSubway != nil { 
                 logger.info("all mice in same subway, ending game")
                 endGame()
                 endTime = Date()
@@ -175,7 +175,7 @@ public class Game: @unchecked Sendable {
         logger.info("position players")
         for player in players {
             if let mouse = player as? Mouse {
-                mouse.subway = Int64.random(in: 0...numberOfSubways)
+                mouse.subway = Int64.random(in: 0..<numberOfSubways)
             } else if player is Cat {
                 player.position = .random
             }

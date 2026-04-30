@@ -9,6 +9,10 @@ type AutoEnterRef = {
   current: string | null;
 };
 
+export function handlePlayerLeaveSubway(exitId: number, ws: WebSocket) {
+  ws.send(JSON.stringify({ type: "LEAVE_SUBWAY", exitId }));
+}
+
 export function handlePlayerEnterSubway(subwayId: number, ws: WebSocket) {
   const payload: EnterSubwayMessage = {
     type: "ENTER_SUBWAY",
@@ -18,47 +22,15 @@ export function handlePlayerEnterSubway(subwayId: number, ws: WebSocket) {
   ws.send(JSON.stringify(payload));
 }
 
-export function checkAutoEnterSubwayAsMouse(
-  player: Player,
-  gameState: Game,
-  lastAutoEnterKeyRef: AutoEnterRef,
-  ws: WebSocket,
-) {
-  console.log("checkAutoEnterSubwayAsMouse");
-  console.log(player);
-  if (
-    player.role !== "mouse" ||
-    gameState.status === "caught" ||
-    typeof player.subway !== "undefined"
-  ) {
-    lastAutoEnterKeyRef.current = null;
-    return;
-  }
-
-  const subwayAtPlayerPosition = gameState.subways.find(
-    (subway) =>
-      typeof subway.id !== "undefined" &&
-      subway.exits.some(
+export function findNearbySubwayId(player: Player, gameState: Game): number | undefined {
+  const subway = gameState.subways.find(
+    (s) =>
+      typeof s.id !== "undefined" &&
+      s.exits.some(
         (exit) =>
           Math.abs(exit.x - player.x) <= 11 &&
           Math.abs(exit.y - player.y) <= 11,
       ),
   );
-
-  if (
-    !subwayAtPlayerPosition ||
-    typeof subwayAtPlayerPosition.id === "undefined"
-  ) {
-    lastAutoEnterKeyRef.current = null;
-    return;
-  }
-
-  const currentAutoEnterKey = `${subwayAtPlayerPosition.id}:${player.x}:${player.y}`;
-  if (lastAutoEnterKeyRef.current === currentAutoEnterKey) return;
-
-  lastAutoEnterKeyRef.current = currentAutoEnterKey;
-  console.log(
-    `Auto ENTER_SUBWAY: subwayId=${subwayAtPlayerPosition.id}, x=${player.x}, y=${player.y}`,
-  );
-  handlePlayerEnterSubway(subwayAtPlayerPosition.id, ws);
+  return subway?.id;
 }

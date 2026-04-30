@@ -137,8 +137,8 @@ When player joins a game as a cat:
     "name": "tom123",
     "role": "mouse" | "cat",
     "subway": 5 | undefined, // id of the subway if inside one
-    "position": { "x": 10, "y": 20 } | undefined, // undefined if inside a subway
-    "caught": number // cat: mice caught, mouse: 0 if alive, CatId when caught (of cat that caught you)
+    "position": { "x": 10, "y": 20 },
+    "caught": number // cat: mice caught, mouse: -1 if alive, CatId when caught (of cat that caught you)
   },
   "mice":
     {

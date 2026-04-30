@@ -11,9 +11,14 @@ services:
       AI_BINARY_PATH: /app/game-ai
     ports:
       - '8080:8080'
+    volumes:
+      - swift-build-cache:/app/.build
 
   frontend:
     build:
       context: ./frontend
     ports:
       - '5173:5173'
+
+volumes:
+  swift-build-cache:
