@@ -322,6 +322,25 @@ export function App() {
         {/* Render a loading info. */}
         {!gameState && gameActive === "true" && <p> Loading Game ...</p>}
 
+        {/* Render the time left banner. */}
+        {gameState && gameActive === "true" && typeof gameState.timeLeft !== "undefined" && (
+          <div
+            style={{
+              marginBottom: 8,
+              padding: "6px 16px",
+              borderRadius: 6,
+              backgroundColor: "rgba(0,0,0,0.75)",
+              color: "#fff",
+              fontFamily: "monospace",
+              fontSize: 18,
+              fontWeight: 700,
+              textAlign: "center",
+            }}
+          >
+            ⏱ {Math.max(0, Math.floor(gameState.timeLeft))}s
+          </div>
+        )}
+
         {/* Render the main game field. */}
         {gameState &&
           gameActive === "true" &&

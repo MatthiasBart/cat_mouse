@@ -28,10 +28,10 @@ struct GameStateCalculator: @unchecked Sendable {
                 .mice(game.mice.filter { $0.subway == subway && $0.id != mouse.id })
                 .cats(game.ghostCats[subway] ?? [])
                 .fieldSize(width: Position.MAX_X, height: Position.MAX_Y)
-                .subways(game.subways.filter { $0.id == subway }, exits: game.exits.filter { $0.subway.id == subway } )
+                .subways(game.subways.filter { $0.id == subway }, exits: game.exits.filter { $0.subway.id == subway })
                 .player(mouse)
                 .timeLeft(Date().distance(to: game.endTime))
-                .voting(game.votings[subway])
+                .voting(game.votings[subway], allSubways: game.subways)
                 .build()
         } else {
             return try GameUpdateMessageBuilder()

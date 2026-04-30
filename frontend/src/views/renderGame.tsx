@@ -276,16 +276,14 @@ const renderVotingMenu = (
       }}
     >
       <div style={{ fontWeight: 700, marginBottom: 6 }}>Vote Ongoing</div>
-      <div style={{ marginBottom: 10 }}>Time left: {activeVote.timeLeft}s</div>
+      <div style={{ marginBottom: 10 }}>Time left: {Math.floor(activeVote.timeLeft)}s</div>
       {activeVote.votes.map((vote) => {
         const subway = subways.find((entry) => entry.id === vote.subwayId);
         const label = subway?.name ?? `Subway ${vote.subwayId}`;
         return (
           <button
             key={vote.subwayId}
-            onClick={() => {
-              if (subway) onVote(vote.subwayId);
-            }}
+            onClick={() => onVote(vote.subwayId)}
             style={{
               display: "block",
               width: "100%",
