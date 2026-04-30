@@ -69,10 +69,10 @@ export type GameUpdateMessage = {
     type: "live" | "ghost"; // live if actual player, ghost if it's the last known position of a cat when a mouse enters the same
     // subway like the player.
   }[];
-  active_vote:
+  activeVote:
     | {
-        timeLeft: number; // in seconds // optional?
-        votes: { subwayId: number; votes: number }[]; // current results for all tunnels
+        timeLeft: number;
+        votes: { subwayId: number; votes: number }[];
       }
     | undefined;
   fieldSize?: {

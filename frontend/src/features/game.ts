@@ -76,7 +76,7 @@ export function handleGameUpdateMessage(
         },
       seq: event.seq,
       timeLeft: event.timeLeft,
-      activeVote: event.active_vote,
+      activeVote: event.activeVote,
       cats,
       mice,
     };

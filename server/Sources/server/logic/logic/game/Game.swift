@@ -101,8 +101,10 @@ public class Game: @unchecked Sendable {
                 endTime = Date()
             }
 
-            let firstSubway = mice.filter { $0.caught == nil }.firstNonNil({ $0.subway })
-            if mice.allSatisfy({ $0.subway == firstSubway }) && firstSubway != nil { 
+// TODO what happens if only one mouse is left
+            let notCaughtMice = mice.filter { $0.caught == nil }
+            let firstSubway = notCaughtMice.firstNonNil({ $0.subway })
+            if notCaughtMice.allSatisfy({ $0.subway == firstSubway }) && firstSubway != nil && notCaughtMice.count != 1 { 
                 logger.info("all mice in same subway, ending game")
                 endGame()
                 endTime = Date()

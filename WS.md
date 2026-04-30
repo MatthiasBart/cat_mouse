@@ -156,7 +156,7 @@ When player joins a game as a cat:
     },
   }[],
   "fieldSize": { "width": 600, "height": 450 },
-  "active_vote": {
+  "activeVote": {
     "timeLeft": "15", // in seconds // optional?
     "votes": {"subwayId": 5, "votes": 5}[] // current results of all tunnels
   },
