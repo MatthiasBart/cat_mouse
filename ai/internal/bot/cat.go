@@ -54,6 +54,9 @@ func processGameUpdateForCat(gameUpdateMessage *networking.GameUpdateMessage) {
 	if !hasTarget {
 		return
 	}
+	if minDist <= moveStep*moveStep {
+		return
+	}
 	moveToward(State.position, target)
 }
 
