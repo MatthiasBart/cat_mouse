@@ -101,7 +101,14 @@ public class Game: @unchecked Sendable {
                 endTime = Date()
             }
 
-            //TODO add check if all mice are in same subway to win
+// TODO what happens if only one mouse is left
+            let notCaughtMice = mice.filter { $0.caught == nil }
+            let firstSubway = notCaughtMice.firstNonNil({ $0.subway })
+            if notCaughtMice.allSatisfy({ $0.subway == firstSubway }) && firstSubway != nil && notCaughtMice.count != 1 { 
+                logger.info("all mice in same subway, ending game")
+                endGame()
+                endTime = Date()
+            }
 
             for (subway, ghostCatsForSub) in ghostCats {
                 ghostCats[subway] = ghostCatsForSub.filter({ $0.lastSeen > (Date().addingTimeInterval(-5))}) 
@@ -110,8 +117,11 @@ public class Game: @unchecked Sendable {
 
     public func endGame() {
         for mouse in mice { 
-            mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
+            if mouse.subway != nil {
+                mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
+            }
         }
+        
         logger.info("setting winner")
         if caughtMice == mice.count {
             winner = cats.max(by: { $0.caught.count < $1.caught.count })
@@ -167,8 +177,7 @@ public class Game: @unchecked Sendable {
         logger.info("position players")
         for player in players {
             if let mouse = player as? Mouse {
-                mouse.subway = nil //  Int64.random(in: 0...numberOfSubways)
-                mouse.position = .random
+                mouse.subway = Int64.random(in: 0..<numberOfSubways)
             } else if player is Cat {
                 player.position = .random
             }
@@ -318,6 +327,6 @@ extension Game {
 
         logger.info("voting in sub \(subway) got canceled by \(manager)")
 
-        voting.endTime = Date() //TODO add way to flag as canceled
+        voting.endTime = Date() //TODO add way to flag as canceledtodo
     }
 }

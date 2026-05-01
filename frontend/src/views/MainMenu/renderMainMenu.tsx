@@ -41,8 +41,9 @@ export function renderMainMenu(onJoin: (code: string) => void): JSX.Element {
   const handleJoin = async () => {
     if (!code) return setError("Enter a code");
     if (!role) return setError("Select a role");
+    if (!name) return setError("Enter a name");
     try {
-      const gameCode = await joinGame(code, role);
+      const gameCode = await joinGame(name, code, role);
       onJoin(code);
       setError(null);
     } catch (e) {
