@@ -45,8 +45,10 @@ class GameUpdateMessageBuilder {
         return self
     }
 
-    func voting(_ voting: Voting?) -> Self {
-        message.activeVote = voting
+    func voting(_ voting: Voting?, allSubways: [Subway]) -> Self {
+        if let voting = voting {
+            message.activeVote = GameUpdateVotingDTO(voting: voting, allSubways: allSubways)
+        }
         return self
     }
 

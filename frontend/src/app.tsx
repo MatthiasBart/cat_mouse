@@ -18,8 +18,9 @@ import {
 } from "./features/game";
 import { handlePlayerVote, handleStartPlayerVote } from "./features/voting";
 import {
-  checkAutoEnterSubwayAsMouse,
+  findNearbySubwayId,
   handlePlayerEnterSubway,
+  handlePlayerLeaveSubway,
 } from "./features/subwayLogic";
 import { renderMainMenu } from "./views/MainMenu/renderMainMenu";
 import { RenderRoom } from "./views/Room/renderRoom";
@@ -39,7 +40,6 @@ export function App() {
   } | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
-  const lastAutoEnterKeyRef = useRef<string | null>(null);
 
   const parseServerMessage = (
     rawMessage: MessageEvent["data"],
@@ -202,35 +202,35 @@ export function App() {
     handlePlayerEnterSubway(subwayId, ws);
   };
 
+  const handleLeaveSubway = (exitId: number) => {
+    if (player?.role === "mouse" && gameState?.status === "caught") return;
+
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    handlePlayerLeaveSubway(exitId, ws);
+  };
+
   useEffect(() => {
     console.log("gameActive:", gameActive);
     console.log("gameState:", gameState);
     console.log("player:", player);
   }, [gameActive, gameState, player]);
 
-  // Check if player should auto-enter a subway:
-  useEffect(() => {
-    if (!gameActive || !gameState || !player) {
-      lastAutoEnterKeyRef.current = null;
-      return;
-    }
-    const ws = wsRef.current;
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
-    checkAutoEnterSubwayAsMouse(player, gameState, lastAutoEnterKeyRef, ws);
-  }, [
-    gameActive,
-    gameState,
-    player?.role,
-    player?.subway,
-    player?.x,
-    player?.y,
-  ]);
-
   // catch keydown events for moving:
   useEffect(() => {
     if (!gameActive) return;
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "e" || e.key === "E") {
+        if (player?.role === "mouse" && gameState && typeof player.subway === "undefined") {
+          const ws = wsRef.current;
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            const subwayId = findNearbySubwayId(player, gameState);
+            if (typeof subwayId !== "undefined") handlePlayerEnterSubway(subwayId, ws);
+          }
+        }
+        return;
+      }
       if (
         e.key !== "ArrowUp" &&
         e.key !== "ArrowDown" &&
@@ -261,8 +261,9 @@ export function App() {
         }),
       );
 
-      // Change the player's x or y coordinates depending on the key press.
-      // Use the previous state to avoid stale closures in this effect.
+      const maxX = gameState?.fieldSize?.width ?? 600;
+      const maxY = gameState?.fieldSize?.height ?? 450;
+
       setPlayer((prevPlayer: Player | null) => {
         if (!prevPlayer) return prevPlayer;
 
@@ -283,9 +284,8 @@ export function App() {
           default:
             break;
         }
-        // Keep within bounds if needed (optional, can be removed/modified)
-        x = Math.max(0, Math.min(350, x)); // todo gamefield size width and height
-        y = Math.max(0, Math.min(350, y));
+        x = Math.max(0, Math.min(maxX, x));
+        y = Math.max(0, Math.min(maxY, y));
 
         return {
           ...prevPlayer,
@@ -296,7 +296,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [gameActive, player, gameState?.status]);
+  }, [gameActive, player, gameState?.status, gameState?.fieldSize]);
 
   return (
     <>
@@ -322,6 +322,25 @@ export function App() {
         {/* Render a loading info. */}
         {!gameState && gameActive === "true" && <p> Loading Game ...</p>}
 
+        {/* Render the time left banner. */}
+        {gameState && gameActive === "true" && typeof gameState.timeLeft !== "undefined" && (
+          <div
+            style={{
+              marginBottom: 8,
+              padding: "6px 16px",
+              borderRadius: 6,
+              backgroundColor: "rgba(0,0,0,0.75)",
+              color: "#fff",
+              fontFamily: "monospace",
+              fontSize: 18,
+              fontWeight: 700,
+              textAlign: "center",
+            }}
+          >
+            ⏱ {Math.max(0, Math.floor(gameState.timeLeft))}s
+          </div>
+        )}
+
         {/* Render the main game field. */}
         {gameState &&
           gameActive === "true" &&
@@ -332,6 +351,7 @@ export function App() {
             handleVote,
             handleStartVote,
             handleEnterSubway,
+            handleLeaveSubway,
           )}
         {/* Render the Exit button at the bottom with spacing from above */}
         {gameActive === "true" && (

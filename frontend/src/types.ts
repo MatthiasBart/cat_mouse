@@ -26,7 +26,7 @@ export interface Player extends Positionable {
 export type Subway = {
   id?: number;
   name?: string;
-  exits: { x: number; y: number }[];
+  exits: { id?: number; x: number; y: number }[];
 };
 export interface Cat extends Positionable {
   id: number;

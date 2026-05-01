@@ -7,12 +7,12 @@ export function renderGameField(
   onVote: (subwayId: number) => void,
   onStartVote: () => void,
   onEnterSubway: (subwayId: number) => void,
+  onLeaveSubway: (exitId: number) => void,
 ): JSX.Element {
   return (
     <div
       style={{
         position: "relative",
-        overflow: "hidden",
         backgroundColor: "grey",
         width: gameState.fieldSize.width,
         height: gameState.fieldSize.height,
@@ -31,6 +31,7 @@ export function renderGameField(
           onVote,
           onStartVote,
           onEnterSubway,
+          onLeaveSubway,
         )}
       </div>
     </div>
@@ -65,6 +66,7 @@ export function renderComponents(
   onVote: (subwayId: number) => void,
   onStartVote: () => void,
   onEnterSubway: (subwayId: number) => void,
+  onLeaveSubway: (exitId: number) => void,
 ): JSX.Element {
   const canAct = !(player.role === "mouse" && gameState.status === "caught");
   const showVotingMenu =
@@ -75,25 +77,38 @@ export function renderComponents(
 
   return (
     <div>
-      {player && renderPlayer(player)}
-      {gameState.mice.map((mouse: Mouse, index: number) => {
-        return (
-          <div
-            key={index}
-            style={{
-              position: "absolute",
-              left: mouse.x,
-              top: mouse.y,
-            }}
-          >
-            <img
-              src="./mouse.png"
-              alt="mouse"
-              style={{ width: 50, height: 50 }}
-            />
-          </div>
-        );
-      })}
+      {player && renderPlayer(player, gameState.fieldSize)}
+      {(() => {
+        const mouseSize = 50;
+        const gap = 10;
+        const subwayMice = gameState.mice.filter((m) => typeof m.subway !== "undefined");
+        const playerLeft = typeof player.subway !== "undefined" ? gameState.fieldSize.width / 2 : player.x;
+        const playerTop = typeof player.subway !== "undefined" ? gameState.fieldSize.height / 2 : player.y;
+        const lineTop = playerTop - mouseSize - 20;
+        const lineStartLeft = playerLeft - (subwayMice.length * (mouseSize + gap) - gap) / 2;
+
+        return gameState.mice.map((mouse: Mouse, index: number) => {
+          let left: number;
+          let top: number;
+          if (typeof mouse.subway !== "undefined") {
+            const subwayIndex = subwayMice.indexOf(mouse);
+            left = lineStartLeft + subwayIndex * (mouseSize + gap);
+            top = lineTop;
+          } else {
+            left = mouse.x;
+            top = mouse.y;
+          }
+          return (
+            <div
+              key={index}
+              style={{ position: "absolute", left, top, transform: "translate(-50%, -50%)", display: "flex", flexDirection: "column", alignItems: "center" }}
+            >
+              <img src="./mouse.png" alt="mouse" style={{ width: mouseSize, height: mouseSize }} />
+              {renderNameTag(mouse.name)}
+            </div>
+          );
+        });
+      })()}
       {gameState.cats.map((cat: Cat, index: number) => {
         return (
           <div
@@ -102,6 +117,10 @@ export function renderComponents(
               position: "absolute",
               left: cat.x,
               top: cat.y,
+              transform: "translate(-50%, -50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
             <img
@@ -114,6 +133,7 @@ export function renderComponents(
                 filter: cat.type === "ghost" ? "grayscale(100%)" : "none",
               }}
             />
+            {renderNameTag(cat.name)}
           </div>
         );
       })}
@@ -132,6 +152,7 @@ export function renderComponents(
                   position: "absolute",
                   left: exit.x,
                   top: exit.y,
+                  transform: "translate(-50%, -50%)",
                 }}
               >
                 <span
@@ -170,18 +191,44 @@ export function renderComponents(
       {showVotingMenu && gameState.activeVote
         ? renderVotingMenu(gameState.activeVote, gameState.subways, onVote)
         : renderStartVoteButton(player, canAct, onStartVote)}
+      {canAct &&
+        player.role === "mouse" &&
+        typeof player.subway !== "undefined" &&
+        renderLeaveSubwayMenu(player.subway, gameState.subways, onLeaveSubway)}
     </div>
   );
 }
 
-const renderPlayer = (player: Player): JSX.Element => {
-  const isOutside = player.role === "mouse" && !player.subway;
+const renderNameTag = (name: string): JSX.Element => (
+  <div
+    style={{
+      marginTop: 2,
+      padding: "1px 5px",
+      borderRadius: 4,
+      backgroundColor: "rgba(0,0,0,0.55)",
+      color: "#fff",
+      fontSize: 11,
+      whiteSpace: "nowrap",
+    }}
+  >
+    {name}
+  </div>
+);
+
+const renderPlayer = (player: Player, fieldSize: { width: number; height: number }): JSX.Element => {
+  const isOutside = player.role === "mouse" && player.subway === undefined;
+  const left = typeof player.subway !== "undefined" ? fieldSize.width / 2 : player.x;
+  const top = typeof player.subway !== "undefined" ? fieldSize.height / 2 : player.y;
   return (
     <div
       style={{
         position: "absolute",
-        left: player.x,
-        top: player.y,
+        left,
+        top,
+        transform: "translate(-50%, -50%)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
       }}
     >
       <img
@@ -203,6 +250,7 @@ const renderPlayer = (player: Player): JSX.Element => {
               }
         }
       />
+      {renderNameTag(player.name)}
     </div>
   );
 };
@@ -228,16 +276,14 @@ const renderVotingMenu = (
       }}
     >
       <div style={{ fontWeight: 700, marginBottom: 6 }}>Vote Ongoing</div>
-      <div style={{ marginBottom: 10 }}>Time left: {activeVote.timeLeft}s</div>
+      <div style={{ marginBottom: 10 }}>Time left: {Math.floor(activeVote.timeLeft)}s</div>
       {activeVote.votes.map((vote) => {
         const subway = subways.find((entry) => entry.id === vote.subwayId);
         const label = subway?.name ?? `Subway ${vote.subwayId}`;
         return (
           <button
             key={vote.subwayId}
-            onClick={() => {
-              if (subway) onVote(vote.subwayId);
-            }}
+            onClick={() => onVote(vote.subwayId)}
             style={{
               display: "block",
               width: "100%",
@@ -249,6 +295,46 @@ const renderVotingMenu = (
           </button>
         );
       })}
+    </div>
+  );
+};
+
+const renderLeaveSubwayMenu = (
+  subwayId: number,
+  subways: Subway[],
+  onLeaveSubway: (exitId: number) => void,
+): JSX.Element => {
+  const subway = subways.find((s) => s.id === subwayId);
+  return (
+    <div
+      style={{
+        position: "absolute",
+        right: 16,
+        bottom: 16,
+        zIndex: 10,
+        padding: 12,
+        minWidth: 180,
+        borderRadius: 8,
+        border: "1px solid #1f2937",
+        backgroundColor: "rgba(17, 24, 39, 0.95)",
+        color: "#f9fafb",
+      }}
+    >
+      <div style={{ fontWeight: 700, marginBottom: 8 }}>
+        {subway?.name ?? `Subway ${subwayId}`}
+      </div>
+      {subway?.exits.map((exit, idx) => (
+        <button
+          key={exit.id ?? idx}
+          disabled={typeof exit.id === "undefined"}
+          onClick={() => {
+            if (typeof exit.id !== "undefined") onLeaveSubway(exit.id);
+          }}
+          style={{ display: "block", width: "100%", marginBottom: 6, padding: "6px 8px" }}
+        >
+          Leave via exit {idx + 1} ({exit.x}, {exit.y})
+        </button>
+      ))}
     </div>
   );
 };
