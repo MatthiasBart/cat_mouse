@@ -50,7 +50,7 @@ struct GameStateCalculator: @unchecked Sendable {
             .mice(game.mice.filter { $0.subway == nil && $0.caught == nil })
             .cats(game.cats.filter { $0.id != cat.id })
             .fieldSize(width: Position.MAX_X, height: Position.MAX_Y)
-            .subways(game.subways, exits: game.exits)
+            .subways(game.subways, exits: game.exits, hideSubways: true)
             .player(cat)
             .timeLeft(Date().distance(to: game.endTime))
             .build()

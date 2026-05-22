@@ -3,9 +3,10 @@ import Foundation
 protocol Player: AnyObject, Identifiable, Movable, Encodable {
     var id: Int64 { get set }
     var name: String { get set }
+    var speed: Int64 { get }
 }
 
-class PlayerDTO: Player {
+class PlayerDTO: Encodable {
     var id: Int64
     var name: String
     var role: String

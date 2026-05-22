@@ -192,7 +192,7 @@ public class Game: @unchecked Sendable {
 
 
         let newPosition = direction
-                .newPosition(position: player.position)
+                .newPosition(position: player.position, with: player.speed)
                 .inRange()
 
         logger.info("player \(player) moved \(direction.rawValue) to \(newPosition)")

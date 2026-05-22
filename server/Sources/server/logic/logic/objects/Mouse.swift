@@ -8,6 +8,7 @@ class Mouse: Player {
     var caught: Cat.ID? = nil
     var totalTimeOnSurface: TimeInterval = 0
     var lastExit: Date = Date()
+    let speed: Int64 = 20
 }
 
 extension Mouse {

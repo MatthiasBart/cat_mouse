@@ -6,6 +6,7 @@ public class Cat: Player {
     var position: Position = .base
     var caught: [Mouse.ID] = []
     private var type = "live"
+    let speed: Int64 = 15
 }
 
 class GhostCat: Cat {

@@ -13,10 +13,10 @@ class GameUpdateMessageBuilder {
         return self
     }
 
-    func subways(_ subways: [Subway], exits: [Exit]) -> Self {
+    func subways(_ subways: [Subway], exits: [Exit], hideSubways: Bool = false) -> Self {
     message.subways = subways.map { subway in
         GameUpdateSubwayDTO(
-            id: subway.id,
+            id: hideSubways ? -1 : subway.id,
             exits: exits
                 .filter { $0.subway.id == subway.id }
                 .map {
