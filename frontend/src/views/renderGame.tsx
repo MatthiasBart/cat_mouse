@@ -115,6 +115,7 @@ export function renderComponents(
           return (
             <div
               key={index}
+              class="mouse"
               style={{ position: "absolute", left, top, transform: "translate(-50%, -50%)", display: "flex", flexDirection: "column", alignItems: "center" }}
             >
               <img src="./mouse.png" alt="mouse" style={{ width: mouseSize, height: mouseSize }} />
@@ -127,6 +128,7 @@ export function renderComponents(
         return (
           <div
             key={index}
+            class="cat"
             style={{
               position: "absolute",
               left: cat.x,
@@ -162,6 +164,7 @@ export function renderComponents(
                   if (typeof subway.id !== "undefined")
                     onEnterSubway(subway.id);
                 }}
+                class="subway-entrance"
                 style={{
                   position: "absolute",
                   left: exit.x,
@@ -237,6 +240,7 @@ const renderPlayer = (player: Player, fieldSize: { width: number; height: number
   const top = typeof player.subway !== "undefined" ? fieldSize.height / 2 : player.y;
   return (
     <div
+      class="player"
       style={{
         position: "absolute",
         left,

@@ -194,3 +194,19 @@
     border-right-color: var(--border);
   }
 }
+
+.player {
+  z-index: 40;
+}
+
+.cat {
+  z-index: 30;
+}
+
+.mouse {
+  z-index: 20;
+}
+
+.subway-entrance {
+  z-index: 10;
+}
