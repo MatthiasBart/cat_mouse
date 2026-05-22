@@ -1,21 +1,22 @@
 package bot
 
 import (
-	"game-ai/internal/networking"
+	nw "game-ai/internal/networking"
 	"math"
 )
 
 type point struct {
-	X float64
-	Y float64
+	X int64
+	Y int64
 }
 
-func moveToward(from point, to point) {
+// moveToward sends a single step toward the target point.
+func moveToward(from nw.PositionMessage, to nw.PositionMessage) {
 	dx := to.X - from.X
 	dy := to.Y - from.Y
 
 	var dir string
-	if math.Abs(dx) >= math.Abs(dy) {
+	if (dx * dx) >= (dy * dy) {
 		if dx >= 0 {
 			dir = "RIGHT"
 		} else {
@@ -27,12 +28,20 @@ func moveToward(from point, to point) {
 		dir = "UP"
 	}
 
-	networking.SendMove(dir)
+	nw.SendMove(dir)
 }
 
-func squaredDistance(a point, b point) float64 {
+// computes squared distance between two points
+func squaredDistance(a nw.PositionMessage, b nw.PositionMessage) float64 {
 	dx := a.X - b.X
 	dy := a.Y - b.Y
-	// squared distance is enough for comparison
-	return dx*dx + dy*dy
+
+	return float64(dx*dx + dy*dy)
+}
+
+func distance(a nw.PositionMessage, b nw.PositionMessage) float64 {
+	dx := a.X - b.X
+	dy := a.Y - b.Y
+
+	return math.Sqrt(float64(dx*dx + dy*dy))
 }

@@ -2,92 +2,85 @@
 package bot
 
 import (
-	"game-ai/internal/networking"
+	nw "game-ai/internal/networking"
+	"math/rand"
+	"time"
 )
 
+// config
 const (
-	moveStep = 20.0
+	catAvoidCatRadius = 100
+	catSpeed          = 15.0
+	deadzone          = (catSpeed / 2) + 5 // and some buffer
 )
 
 type catState struct {
-	position        point
-	current_mice    map[int64]point
-	remembered_mice map[int64]point
+	target *nw.PositionMessage
 }
 
-var State = newState()
+var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-func newState() *catState {
-	return &catState{
-		current_mice:    make(map[int64]point),
-		remembered_mice: make(map[int64]point),
+var State = catState{
+	target: &nw.PositionMessage{X: 0, Y: 0},
+}
+
+func processGameUpdateForCat(update *nw.GameUpdateMessage) {
+	if len(update.Mice) > 0 {
+		// if mouses on surface: follow the closest mouse without another cat nearby.
+		chooseMouseTarget(update)
+	} else if State.target == nil {
+		// else if no target choosen already, pick random
+		chooseRandomTarget(update)
+	}
+
+	moveTowardTarget(update)
+}
+
+func moveTowardTarget(update *nw.GameUpdateMessage) {
+	moveToward(*update.Player.Position, *State.target)
+	if distance(*update.Player.Position, *State.target) < deadzone {
+		// clear target when reached
+		State.target = nil
 	}
 }
 
-func processGameUpdateForCat(gameUpdateMessage *networking.GameUpdateMessage) {
-	updateState(gameUpdateMessage)
-	// find either closest mouse or closest remembered mouse, and move toward it
-	// prioritize mouse on surface, only move toward remembered position if no mouse on surface
-	var target point
-	hasTarget := false
-	minDist := 1e9
+func chooseMouseTarget(update *nw.GameUpdateMessage) {
+	var target nw.PositionMessage
 
-	if len(State.current_mice) > 0 {
-		for _, mouse := range State.current_mice {
-			d := squaredDistance(State.position, mouse)
-			if d < minDist {
-				minDist = d
-				target = mouse
-				hasTarget = true
-			}
+	for _, mouse := range update.Mice {
+		if isMouseCovered(update.Cats, mouse) {
+			continue
 		}
-	} else {
-		for _, mouse := range State.remembered_mice {
-			d := squaredDistance(State.position, mouse)
-			if d < minDist {
-				minDist = d
-				target = mouse
-				hasTarget = true
-			}
+		d := distance(*update.Player.Position, *mouse.Position)
+		if d < distance(*update.Player.Position, target) || target.X == 0 && target.Y == 0 {
+			target = *mouse.Position
 		}
 	}
-	if !hasTarget {
+
+	State.target = &target
+}
+
+func chooseRandomTarget(update *nw.GameUpdateMessage) {
+	count := len(update.Subways)
+	if count == 0 {
 		return
 	}
-	if minDist <= moveStep*moveStep {
+	idx := rng.Intn(count)
+	if idx < 0 {
 		return
 	}
-	moveToward(State.position, target)
+
+	State.target = &nw.PositionMessage{
+		X: update.Subways[idx].Exits[0].X,
+		Y: update.Subways[idx].Exits[0].Y,
+	}
 }
 
-func updateState(gameUpdate *networking.GameUpdateMessage) {
-	if gameUpdate.Player.Position != nil {
-		// cat should always have a position, but check just in case
-		State.position = point{
-			X: float64(gameUpdate.Player.Position.X),
-			Y: float64(gameUpdate.Player.Position.Y),
+func isMouseCovered(cats []nw.CatStateMessage, mouse nw.MouseStateMessage) bool {
+	for _, cat := range cats {
+		if distance(*cat.Position, *mouse.Position) <= catAvoidCatRadius {
+			return true
 		}
 	}
-
-	prevMice := State.current_mice
-	State.current_mice = make(map[int64]point)
-
-	for _, mouse := range gameUpdate.Mice {
-		if mouse.Position != nil {
-			p := point{
-				X: float64(mouse.Position.X),
-				Y: float64(mouse.Position.Y),
-			}
-			State.current_mice[mouse.ID] = p
-			delete(State.remembered_mice, mouse.ID)
-		}
-		// else the mouse entered hole,
-		// therefore last position is remembered
-	}
-
-	for id, p := range prevMice {
-		if _, stillVisible := State.current_mice[id]; !stillVisible {
-			State.remembered_mice[id] = p
-		}
-	}
+	return false
 }

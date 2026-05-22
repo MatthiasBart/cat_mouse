@@ -31,19 +31,12 @@ go build . && ./game-ai --code="ABCDEFG" --role="cat" --name="ai-bot"
 
 ### Cat AI
 
-- "memory" behavior
-  - if a mouse enters a hole, keep track of which hole for this mouse (playerId)
-  - if a mouse leaves hole, remove
+- state
+  - store current target (mouse or random subway exit)
 
 - movement behavior
-  - compares
-    1. Mouses on the surfaces (received from server)
-    2. Last seen holes positions (see memory behavior)
-  - Runs to nearest mouse (1) or hole (2) based on the euclidean distance, if its at a hole, just waits there
-  - Only runs to holes if no mouse on surface anymore (because mouse could have esaped already)
-
-- actions
-  - always catch mouse if touched
+  1. If mice are visible, chase the closest mouse that is not already covered (fixed radius) by another cat
+  2. If no mice are visible (or all are covered), pick a random subway exit and move there
 
 ### Mouse AI
 
