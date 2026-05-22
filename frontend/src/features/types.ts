@@ -45,6 +45,18 @@ export type GameInitMessage = {
   }[];
 };
 
+export type GameEndedMessage = {
+  type: "GAME_ENDED",
+  player: {
+    id: 7,
+    name: string,
+    type: Role,
+    caught: number | undefined,
+    timeOnSurface: number | undefined,
+  },
+  totalTime: number
+}
+
 export type GameUpdateMessage = {
   type: "GAME_UPDATE";
   seq: number;

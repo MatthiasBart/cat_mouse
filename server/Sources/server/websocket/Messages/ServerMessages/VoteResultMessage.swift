@@ -1,4 +1,4 @@
 struct VoteResultMessage: ServerMessage {
-    var type: ServerMessageType { .voteResult }
+    let type: ServerMessageType = .voteResult
     var win_subway: Int64
 }

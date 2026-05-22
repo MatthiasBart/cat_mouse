@@ -4,6 +4,7 @@ import type { Game, Player, Role } from "./types";
 import type {
   CaughtMessage,
   ConnectionInitMessage,
+  GameEndedMessage,
   GameInitMessage,
   GameUpdateMessage,
   PlayerJoinedMessage,
@@ -13,6 +14,7 @@ import { renderGameField } from "./views/renderGame";
 import { renderButton } from "./views/renderComponents";
 import {
   handleCaughtMessage,
+  handleGameEndedMessage,
   handleGameInitMessage,
   handleGameUpdateMessage,
 } from "./features/game";
@@ -46,6 +48,7 @@ export function App() {
   ):
     | GameInitMessage
     | GameUpdateMessage
+    | GameEndedMessage
     | VoteResultMessage
     | CaughtMessage
     | ConnectionInitMessage
@@ -97,6 +100,9 @@ export function App() {
           }
           handleGameUpdateMessage(serverMessage, setGameState, setPlayer);
           setGameActive("true");
+          break;
+        case "GAME_ENDED":
+          handleGameEndedMessage(serverMessage, player, setGameState);
           break;
         case "CAUGHT":
           handleCaughtMessage(serverMessage, setGameState);

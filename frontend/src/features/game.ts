@@ -1,6 +1,7 @@
 import type { Game, Player } from "../types";
 import type {
   CaughtMessage,
+  GameEndedMessage,
   GameInitMessage,
   GameUpdateMessage,
 } from "./types";
@@ -34,6 +35,26 @@ export function handleGameInitMessage(
     role: event.role,
     x: event.playerPosition.x,
     y: event.playerPosition.y,
+  });
+}
+
+export function handleGameEndedMessage(
+  event: GameEndedMessage,
+  player: Player | null,
+  setGameState: (
+    value: Game | null | ((prev: Game | null) => Game | null),
+  ) => void,
+) {
+  alert(
+    `Game ended! Player ${event.player.name} (${event.player.type}) won. \nTotal time: ${Math.round(event.totalTime / 1000)}s`,
+  );
+  setGameState((prevGame) => {
+    if (!prevGame) return prevGame;
+
+    return {
+      ...prevGame,
+      status: player?.id === event.player.id ? "won" : "lost",
+    };
   });
 }
 

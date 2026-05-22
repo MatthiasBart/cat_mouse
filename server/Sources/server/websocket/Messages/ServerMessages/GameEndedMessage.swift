@@ -1,5 +1,5 @@
 struct GameEndedMessage: ServerMessage { 
-    var type: ServerMessageType { .gameEnded }
+    let type: ServerMessageType = .gameEnded
     var player: Player
     var totalTime: Int64
 

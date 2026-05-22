@@ -1,3 +1,3 @@
 struct CaughtMessage: ServerMessage { 
-    var type: ServerMessageType { .mouseCaught }
+    let type: ServerMessageType = .mouseCaught
 }
