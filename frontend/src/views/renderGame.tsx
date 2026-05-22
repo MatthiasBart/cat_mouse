@@ -1,6 +1,20 @@
 import type { Game, Cat, Mouse, Subway, Player, ActiveVote } from "../types";
 import type { JSX } from "preact/jsx-runtime";
 
+const SUBWAY_COLORS = [
+  "#e74c3c",
+  "#3498db",
+  "#2ecc71",
+  "#f39c12",
+  "#9b59b6",
+  "#1abc9c",
+  "#e67e22",
+  "#34495e",
+];
+
+const subwayColor = (subwayId: number): string =>
+  SUBWAY_COLORS[subwayId % SUBWAY_COLORS.length];
+
 export function renderGameField(
   gameState: Game,
   player: Player,
@@ -170,19 +184,21 @@ export function renderComponents(
                   🕳️
                 </span>
 
-                <div
-                  style={{ fontSize: "0.8rem", color: "#333", lineHeight: 1.1 }}
-                >
-                  <div>
-                    {typeof subway.id !== "undefined"
-                      ? `ID: ${subway.id}`
-                      : "ID: -"}{" "}
-                    Exit: ({exit.x}, {exit.y})
+                {player.role === "mouse" && typeof exit.id !== "undefined" && typeof subway.id !== "undefined" && (
+                  <div
+                    style={{
+                      marginTop: 4,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      backgroundColor: subwayColor(subway.id),
+                      color: "#fff",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {subway.id}
                   </div>
-                  {typeof subway.name !== "undefined" && (
-                    <div style={{ marginTop: 1 }}>Name: {subway.name}</div>
-                  )}
-                </div>
+                )}
               </div>
             ))}
           </>
