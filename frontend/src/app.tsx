@@ -228,11 +228,16 @@ export function App() {
     if (!gameActive) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "e" || e.key === "E") {
-        if (player?.role === "mouse" && gameState && typeof player.subway === "undefined") {
+        if (
+          player?.role === "mouse" &&
+          gameState &&
+          typeof player.subway === "undefined"
+        ) {
           const ws = wsRef.current;
           if (ws && ws.readyState === WebSocket.OPEN) {
             const subwayId = findNearbySubwayId(player, gameState);
-            if (typeof subwayId !== "undefined") handlePlayerEnterSubway(subwayId, ws);
+            if (typeof subwayId !== "undefined")
+              handlePlayerEnterSubway(subwayId, ws);
           }
         }
         return;
@@ -329,23 +334,25 @@ export function App() {
         {!gameState && gameActive === "true" && <p> Loading Game ...</p>}
 
         {/* Render the time left banner. */}
-        {gameState && gameActive === "true" && typeof gameState.timeLeft !== "undefined" && (
-          <div
-            style={{
-              marginBottom: 8,
-              padding: "6px 16px",
-              borderRadius: 6,
-              backgroundColor: "rgba(0,0,0,0.75)",
-              color: "#fff",
-              fontFamily: "monospace",
-              fontSize: 18,
-              fontWeight: 700,
-              textAlign: "center",
-            }}
-          >
-            ⏱ {Math.max(0, Math.floor(gameState.timeLeft))}s
-          </div>
-        )}
+        {gameState &&
+          gameActive === "true" &&
+          typeof gameState.timeLeft !== "undefined" && (
+            <div
+              style={{
+                marginBottom: 8,
+                padding: "6px 16px",
+                borderRadius: 6,
+                backgroundColor: "rgba(0,0,0,0.75)",
+                color: "#fff",
+                fontFamily: "monospace",
+                fontSize: 18,
+                fontWeight: 700,
+                textAlign: "center",
+              }}
+            >
+              ⏱ {Math.max(0, Math.floor(gameState.timeLeft))}s
+            </div>
+          )}
 
         {/* Render the main game field. */}
         {gameState &&
@@ -410,6 +417,29 @@ export function App() {
             You were caught. Spectating mode active.
           </div>
         )}
+
+        <div
+          style={{
+            margin: "16px auto",
+            maxWidth: "420px",
+            padding: "8px 12px",
+            border: "1px solid #d1d5db",
+            borderRadius: 8,
+            backgroundColor: "#f3f4f6",
+            color: "#1f2937",
+            fontSize: "15px",
+          }}
+        >
+          <strong>Controls:</strong>
+          <ul style={{ margin: "8px 0 0 18px", padding: 0 }}>
+            <li>
+              <kbd>Arrow Keys</kbd>: Move your character
+            </li>
+            <li>
+              <kbd>E</kbd>: Enter nearby subway (as mouse)
+            </li>
+          </ul>
+        </div>
       </section>
 
       <section id="next-steps">

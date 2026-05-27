@@ -9,10 +9,12 @@ export function renderMainMenu(onJoin: (code: string) => void): JSX.Element {
   const [role, setRole] = useState<Role | null>();
   const [code, setCode] = useState<string>("");
 
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const trimmedName = name.trim();
 
@@ -36,6 +38,7 @@ export function renderMainMenu(onJoin: (code: string) => void): JSX.Element {
     }
 
     setError(null);
+    setIsSubmitting(false);
   };
 
   const handleJoin = async () => {
@@ -84,7 +87,16 @@ export function renderMainMenu(onJoin: (code: string) => void): JSX.Element {
         </select>
         <div style={{ height: "8px" }} />
 
-        <button type="submit">Create New Game</button>
+        <button type="submit">
+          {isSubmitting ? (
+            <>
+              <span class="spinner" aria-hidden="true" />
+              Creating...
+            </>
+          ) : (
+            "Create New Game"
+          )}
+        </button>
 
         <div style={{ height: "16px" }} />
         <label for="code">Game Code</label>
@@ -103,6 +115,10 @@ export function renderMainMenu(onJoin: (code: string) => void): JSX.Element {
                 setError(
                   "Please select a role and enter a code to join a game.",
                 );
+                return;
+              }
+              if (!name) {
+                setError("Please enter a Name.");
                 return;
               }
               await handleJoin();
