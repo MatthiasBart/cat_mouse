@@ -136,6 +136,9 @@ export function RenderRoom({
               starting ||
               !connectionInitResult.players.some(
                 (p) => p.role.toLowerCase() === "mouse",
+              ) ||
+              !connectionInitResult.players.some(
+                (p) => p.role.toLowerCase() === "cat",
               )
             }
           >
