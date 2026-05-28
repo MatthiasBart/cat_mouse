@@ -95,11 +95,20 @@ export function renderComponents(
       {(() => {
         const mouseSize = 50;
         const gap = 10;
-        const subwayMice = gameState.mice.filter((m) => typeof m.subway !== "undefined");
-        const playerLeft = typeof player.subway !== "undefined" ? gameState.fieldSize.width / 2 : player.x;
-        const playerTop = typeof player.subway !== "undefined" ? gameState.fieldSize.height / 2 : player.y;
+        const subwayMice = gameState.mice.filter(
+          (m) => typeof m.subway !== "undefined",
+        );
+        const playerLeft =
+          typeof player.subway !== "undefined"
+            ? gameState.fieldSize.width / 2
+            : player.x;
+        const playerTop =
+          typeof player.subway !== "undefined"
+            ? gameState.fieldSize.height / 2
+            : player.y;
         const lineTop = playerTop - mouseSize - 20;
-        const lineStartLeft = playerLeft - (subwayMice.length * (mouseSize + gap) - gap) / 2;
+        const lineStartLeft =
+          playerLeft - (subwayMice.length * (mouseSize + gap) - gap) / 2;
 
         return gameState.mice.map((mouse: Mouse, index: number) => {
           let left: number;
@@ -116,9 +125,21 @@ export function renderComponents(
             <div
               key={index}
               class="mouse"
-              style={{ position: "absolute", left, top, transform: "translate(-50%, -50%)", display: "flex", flexDirection: "column", alignItems: "center" }}
+              style={{
+                position: "absolute",
+                left,
+                top,
+                transform: "translate(-50%, -50%)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
             >
-              <img src="./mouse.png" alt="mouse" style={{ width: mouseSize, height: mouseSize }} />
+              <img
+                src="./mouse.png"
+                alt="mouse"
+                style={{ width: mouseSize, height: mouseSize }}
+              />
               {renderNameTag(mouse.name)}
             </div>
           );
@@ -187,21 +208,23 @@ export function renderComponents(
                   🕳️
                 </span>
 
-                {player.role === "mouse" && typeof exit.id !== "undefined" && typeof subway.id !== "undefined" && (
-                  <div
-                    style={{
-                      marginTop: 4,
-                      padding: "2px 6px",
-                      borderRadius: 4,
-                      backgroundColor: subwayColor(subway.id),
-                      color: "#fff",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {subway.id}
-                  </div>
-                )}
+                {player.role === "mouse" &&
+                  typeof exit.id !== "undefined" &&
+                  typeof subway.id !== "undefined" && (
+                    <div
+                      style={{
+                        marginTop: 4,
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                        backgroundColor: subwayColor(subway.id),
+                        color: "#fff",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {subway.id}
+                    </div>
+                  )}
               </div>
             ))}
           </>
@@ -218,7 +241,10 @@ export function renderComponents(
   );
 }
 
-const renderNameTag = (name: string): JSX.Element => (
+const renderNameTag = (
+  name: string,
+  isPlayer: boolean = false,
+): JSX.Element => (
   <div
     style={{
       marginTop: 2,
@@ -228,16 +254,22 @@ const renderNameTag = (name: string): JSX.Element => (
       color: "#fff",
       fontSize: 11,
       whiteSpace: "nowrap",
+      fontWeight: isPlayer ? "bold" : "normal",
     }}
   >
     {name}
   </div>
 );
 
-const renderPlayer = (player: Player, fieldSize: { width: number; height: number }): JSX.Element => {
+const renderPlayer = (
+  player: Player,
+  fieldSize: { width: number; height: number },
+): JSX.Element => {
   const isOutside = player.role === "mouse" && player.subway === undefined;
-  const left = typeof player.subway !== "undefined" ? fieldSize.width / 2 : player.x;
-  const top = typeof player.subway !== "undefined" ? fieldSize.height / 2 : player.y;
+  const left =
+    typeof player.subway !== "undefined" ? fieldSize.width / 2 : player.x;
+  const top =
+    typeof player.subway !== "undefined" ? fieldSize.height / 2 : player.y;
   return (
     <div
       class="player"
@@ -270,7 +302,7 @@ const renderPlayer = (player: Player, fieldSize: { width: number; height: number
               }
         }
       />
-      {renderNameTag(player.name)}
+      {renderNameTag(player.name, true)}
     </div>
   );
 };
@@ -296,7 +328,9 @@ const renderVotingMenu = (
       }}
     >
       <div style={{ fontWeight: 700, marginBottom: 6 }}>Vote Ongoing</div>
-      <div style={{ marginBottom: 10 }}>Time left: {Math.floor(activeVote.timeLeft)}s</div>
+      <div style={{ marginBottom: 10 }}>
+        Time left: {Math.floor(activeVote.timeLeft)}s
+      </div>
       {activeVote.votes.map((vote) => {
         const subway = subways.find((entry) => entry.id === vote.subwayId);
         const label = subway?.name ?? `Subway ${vote.subwayId}`;
@@ -350,7 +384,12 @@ const renderLeaveSubwayMenu = (
           onClick={() => {
             if (typeof exit.id !== "undefined") onLeaveSubway(exit.id);
           }}
-          style={{ display: "block", width: "100%", marginBottom: 6, padding: "6px 8px" }}
+          style={{
+            display: "block",
+            width: "100%",
+            marginBottom: 6,
+            padding: "6px 8px",
+          }}
         >
           Leave via exit {idx + 1} ({exit.x}, {exit.y})
         </button>
