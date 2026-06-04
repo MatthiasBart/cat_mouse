@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import "./app.css";
-import type { Game, Player, Role } from "./types";
+import type { Game, Player } from "./types";
 import type {
   CaughtMessage,
   ConnectionInitMessage,
@@ -77,6 +77,7 @@ export function App() {
   };
 
   const onJoin = async (code: string): Promise<void> => {
+    sessionStorage.setItem("gameCode", code);
     setGameActive("room");
     console.log("opening websocket");
     const socket = new WebSocket(`ws://localhost:8080/games/${code}/ws`);
@@ -134,9 +135,13 @@ export function App() {
           break;
       }
     };
-    socket.onclose = () => console.log("Disconnected from WebSocket server");
+    socket.onclose = () => {
+      console.log("Disconnected from WebSocket server");
+      if (wsRef.current === socket) {
+        exitGame();
+      }
+    };
     socket.onerror = (err) => console.error("WebSocket error:", err);
-    wsRef.current = socket;
     wsRef.current = socket;
   };
 
@@ -146,8 +151,13 @@ export function App() {
 
   // Exit room/game functionality, as used by "onExitRoom" and main exit button
   const exitGame = () => {
-    wsRef.current?.close();
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "LEAVE_GAME" }));
+    }
+    const ws = wsRef.current;
     wsRef.current = null;
+    ws?.close();
+    sessionStorage.removeItem("gameCode");
     setConnectionInitResult(null);
     setGameState(null);
     setPlayer(null);
@@ -163,7 +173,15 @@ export function App() {
   useEffect(() => {}, [wsRef.current]);
 
   useEffect(() => {
-    return () => wsRef.current?.close();
+    const savedCode = sessionStorage.getItem("gameCode");
+    if (savedCode) {
+      onJoin(savedCode);
+    }
+    return () => {
+      const ws = wsRef.current;
+      wsRef.current = null;
+      ws?.close();
+    };
   }, []);
 
   useEffect(() => {
