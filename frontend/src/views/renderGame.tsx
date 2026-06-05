@@ -231,13 +231,17 @@ export function renderComponents(
           </>
         );
       })}
-      {showVotingMenu && gameState.activeVote
-        ? renderVotingMenu(gameState.activeVote, gameState.subways, onVote)
-        : renderStartVoteButton(player, canAct, onStartVote)}
+      <div class="side-column" style={{ right: "100%"}}>
       {canAct &&
         player.role === "mouse" &&
         typeof player.subway !== "undefined" &&
         renderLeaveSubwayMenu(player.subway, gameState.subways, onLeaveSubway)}
+      </div>
+      <div class="side-column" style={{ left: "100%"}}>
+      {showVotingMenu && gameState.activeVote
+        ? renderVotingMenu(gameState.activeVote, gameState.subways, onVote)
+        : renderStartVoteButton(player, canAct, onStartVote)}
+      </div>
     </div>
   );
 }
@@ -314,20 +318,7 @@ const renderVotingMenu = (
   onVote: (subwayId: number) => void,
 ): JSX.Element => {
   return (
-    <div
-      style={{
-        position: "absolute",
-        right: 16,
-        top: 16,
-        zIndex: 10,
-        padding: 12,
-        minWidth: 220,
-        borderRadius: 8,
-        border: "1px solid #1f2937",
-        backgroundColor: "rgba(17, 24, 39, 0.95)",
-        color: "#f9fafb",
-      }}
-    >
+    <div class="menu">
       <div style={{ fontWeight: 700, marginBottom: 6 }}>Vote Ongoing</div>
       <div style={{ marginBottom: 10 }}>
         Time left: {Math.floor(activeVote.timeLeft)}s
@@ -361,20 +352,7 @@ const renderLeaveSubwayMenu = (
 ): JSX.Element => {
   const subway = subways.find((s) => s.id === subwayId);
   return (
-    <div
-      style={{
-        position: "absolute",
-        right: 16,
-        bottom: 16,
-        zIndex: 10,
-        padding: 12,
-        minWidth: 180,
-        borderRadius: 8,
-        border: "1px solid #1f2937",
-        backgroundColor: "rgba(17, 24, 39, 0.95)",
-        color: "#f9fafb",
-      }}
-    >
+    <div class="menu">
       <div style={{ fontWeight: 700, marginBottom: 8 }}>
         {subway?.name ?? `Subway ${subwayId}`}
       </div>
@@ -408,12 +386,6 @@ const renderStartVoteButton = (
 
   return (
     <div
-      style={{
-        position: "absolute",
-        right: 16,
-        top: 16,
-        zIndex: 10,
-      }}
     >
       <button
         disabled={!canStartVote}
