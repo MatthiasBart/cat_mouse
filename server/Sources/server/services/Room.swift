@@ -31,7 +31,11 @@ actor Room {
         self.game.gameDelegate = self
     }
 
-    func startGame() {
+    func startGame() throws {
+        if !game.gameReady {
+            throw ServerError.gameNotReady
+        }
+
         gameTask = Task {
             game.startGame()
             logger.info("game loop started \(self.code)")

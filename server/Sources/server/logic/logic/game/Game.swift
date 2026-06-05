@@ -50,7 +50,7 @@ public class Game: @unchecked Sendable {
     }
 
     public var gameReady: Bool {
-        mice.count + cats.count > 0 
+        mice.count >= 2 && cats.count >= 1 
     }
 
     static let duration: TimeInterval = 300
