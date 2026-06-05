@@ -103,7 +103,6 @@ export function RenderRoom({
       <table class="room-table">
         <thead>
           <tr>
-            <th>Player ID</th>
             <th>Name</th>
             <th>Role</th>
           </tr>
@@ -116,8 +115,8 @@ export function RenderRoom({
               <tr
                 key={player.playerId}
                 class={isCurrent ? "current-player" : ""}
+                title={`${player.playerId}`}
               >
-                <td>{player.playerId}</td>
                 <td>
                   {player.playerName}
                   {isCurrent ? " (you)" : ""}

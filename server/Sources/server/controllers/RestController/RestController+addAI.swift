@@ -1,6 +1,8 @@
 import Vapor
 
 extension RestController {
+    private static let names = Set(["Tom", "Luna", "Leo", "Milo", "Bella", "Chloe", "Felix", "Salem", "Oliver", "Nala", "Loki", "Oreo", "Tiger", "Cleo", "Smokey", "Daisy", "Shadow", "Sam", "Paws", "Kitty", "Mickey", "Minnie", "Stuart", "Remy", "Bianca", "Speedy", "Gus", "Jaq", "Timothy", "Brain", "Pinky", "Ralph", "Hubie", "Bertie", "Cheddar", "Pip", "Squeak"])
+
     struct AddAIRequestQuery: Content {
         let role: String?
         let playerName: String?
@@ -48,8 +50,7 @@ extension RestController {
             roleArgument = "mouse"
         }
 
-        let aiName = "ai-\(roleArgument)-\(UUID().uuidString.prefix(8))"
-
+        let aiName: String = "\(Self.names.randomElement()!) AI"
         let process = Process()
         process.executableURL = URL(fileURLWithPath: aiBinaryPath)
         process.arguments = [
