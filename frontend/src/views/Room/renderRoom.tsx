@@ -76,22 +76,28 @@ export function RenderRoom({
   return (
     <section class="room-card">
       <div class="room-header">
-        <h2>Room {connectionInitResult.code}</h2>
-        <button
-          onClick={() =>
-            navigator.clipboard.writeText(connectionInitResult.code)
-          }
-        >
-          Copy Code
-        </button>
-        <button
-          type="button"
-          class="exit-room-btn"
-          style={{ marginLeft: "1rem" }}
-          onClick={handleExitRoom}
-        >
-          Exit Room
-        </button>
+        <div>
+          <h2>Room</h2>
+          <div>
+            <button
+              onClick={() =>
+                navigator.clipboard.writeText(connectionInitResult.code)
+              }
+            >
+              Copy Code
+            </button>
+            <button
+              type="button"
+              class="exit-room-btn"
+              style={{ marginLeft: "0.5rem" }}
+              onClick={handleExitRoom}
+            >
+              Exit Room
+            </button>
+          </div>
+        </div>
+
+        <code>{connectionInitResult.code}</code>
       </div>
 
       <table class="room-table">
@@ -128,6 +134,7 @@ export function RenderRoom({
       {connectionInitResult.currentPlayerId !== null &&
       connectionInitResult.players.find((player) => player.isCreator)
         ?.playerId === connectionInitResult.currentPlayerId ? (
+        <>
         <div class="room-actions">
           <button
             type="button"
@@ -162,6 +169,9 @@ export function RenderRoom({
             </button>
           </div>
         </div>
+        <div class="hint"><i>To start a game, at least 2 mice players and 1 cat player are required.</i></div>
+        </>
+          
       ) : (
         <p>
           Waiting for{" "}

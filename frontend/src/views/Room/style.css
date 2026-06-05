@@ -11,7 +11,13 @@
 
 .room-header {
   display: flex;
+  flex-direction: column;
+}
+
+.room-header > div {
+  display: flex;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 .room-table {
@@ -45,7 +51,8 @@
 }
 
 .room-actions {
-  display: grid;
+  display: flex;
+  justify-content: space-between;
   gap: 0.6rem;
 }
 

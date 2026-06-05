@@ -3,7 +3,7 @@
   --text-h: #08060d;
   --bg: #fff;
   --border: #e5e4e7;
-  --code-bg: #f4f3ec;
+  --code-bg: #f3f4f6;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
@@ -95,17 +95,14 @@ p {
   margin: 0;
 }
 
-code,
-.counter {
+code {
   font-family: var(--mono);
   display: inline-flex;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
+  font-size: 0.9rem;
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+  color: var(--text-h);
 }

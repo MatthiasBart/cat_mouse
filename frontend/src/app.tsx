@@ -4,6 +4,7 @@ import type { Game, Player } from "./types";
 import type {
   CaughtMessage,
   ConnectionInitMessage,
+  ErrorMessage,
   GameEndedMessage,
   GameInitMessage,
   GameUpdateMessage,
@@ -53,6 +54,7 @@ export function App() {
     | CaughtMessage
     | ConnectionInitMessage
     | PlayerJoinedMessage
+    | ErrorMessage
     | null => {
     if (typeof rawMessage === "string") {
       try {
@@ -70,7 +72,8 @@ export function App() {
         | CaughtMessage
         | GameInitMessage
         | GameUpdateMessage
-        | VoteResultMessage;
+        | VoteResultMessage
+        | ErrorMessage;
     }
 
     return null;
@@ -132,6 +135,9 @@ export function App() {
               players: [...previousState.players, serverMessage.player],
             };
           });
+          break;
+        case "ERROR":
+          alert(`Error: ${serverMessage.message} (Code: ${serverMessage.code})`);
           break;
       }
     };
@@ -460,7 +466,7 @@ export function App() {
         </div>
       </section>
 
-      <section id="next-steps">
+      <section id="footer">
         <div id="footer">
           <p>PPL - Group X</p>
         </div>

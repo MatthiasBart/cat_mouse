@@ -109,3 +109,9 @@ export type VoteResultMessage = {
 export type CaughtMessage = {
   type: "CAUGHT";
 };
+
+export type ErrorMessage = {
+  type: "ERROR";
+  code: number;
+  message: string;
+};
