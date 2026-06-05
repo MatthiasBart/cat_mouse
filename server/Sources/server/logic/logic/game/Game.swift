@@ -306,7 +306,10 @@ extension Game {
         logger.info("\(mouse.id) voted for \(subway)")
         voting.votes[mouse.id] = subway
 
-        if voting.votes.count == mice.filter({ $0.subway == subway }).count {
+        if mice.allSatisfy { voting.votes.keys.contains($0.id) } {
+            // checks if all mice currently in subway have voted
+            // therefore does not matter if mice that already left voted,
+            // or mice that later on joined
             logger.info("all mice in sub \(mouse.subway ?? -1) voted for sub \(subway)")
             voting.endTime = Date()
         }
