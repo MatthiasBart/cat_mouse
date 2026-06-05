@@ -40,27 +40,18 @@ go build . && ./game-ai --code="ABCDEFG" --role="cat" --name="ai-bot"
 
 ### Mouse AI
 
-- "memory" behavior
-  - when entering a hole, remember position of cats
-  - remember result of last vote
+- state
+  - store current target (subway exit coordinate)
+  - store winning subway id (from recent vote results)
 
-- movement behavior (multiple rules, top ones have priority)
-  1. avoid cats in a XXX (TODO: test some values) radius, if inside the radius:
-    - run into opposite direction of all cats in the radius (calc. direction vectors)
-    - enter holes if in radius
-  2. if vote exists:
-    - move towards any of the voted subway holes
-    - iterate over all holes and choose the first suitable one (no cat hovering over hole in a XXX radius)
-    - if all holes are besetzt, do skip and do 3.
-  3. if no vote: 
-    - move towards nearest subway hole
-    - iterate over all holes and choose the first suitable one (no cat hovering over hole in a XXX radius)
-    - if all holes are besetzt, do skip and do 4.
-  4. iterate over all holes and choose the first suitable one (no cat hovering over hole in a XXX radius)
-    - if all holes are besetzt just run in a random direction
+- movement behavior (top ones have priority)
+  1. If a cat is nearby (configurable radius), try to escape to "best" exits (preferring exits closer to the mouse than the cat, and exists of the last voting winning subway).
+  2. If no cat is nearby, but there is a winning subway (from a previous vote), target the closest exit of that subway.
+  3. If no target and no winning subway, pick a completely random subway exit and move there.
 
-- voting
-  - TBD
-
-- actions
-  - enter hole if touched and hole is target (see movement behavior) hole
+- subway & voting behavior
+  - when entering or inside a subway:
+    - if the mouse is already in the winning subway, it simply stays there and waits.
+    - if there is no active vote, it sends a `START_VOTE` message.
+    - if there is an active vote, it votes for a random subway (and remembers if it has voted before)
+    - once a `VOTE_RESULT` is received, it records the winning subway and leaves its current subway via a random exit.

@@ -5,6 +5,9 @@ import (
 	"game-ai/internal/bot"
 	"game-ai/internal/networking"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 type GameStatus int
@@ -21,9 +24,24 @@ func main() {
 	networking.InitApiClient()
 	networking.JoinGame(args.Host, args.Code, args.Name, args.Role)
 	networking.ConnectWS(args.Host, args.Code)
+
+	// signal handler
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
+		log.Println("Received termination signal, leaving game...")
+		if networking.Connection != nil {
+			networking.SendLeaveGame()
+		}
+		os.Exit(0)
+	}()
+
 	// IN-GAME: read loop
 	readLoop()
-	networking.SendLeaveGame()
+	if networking.Connection != nil {
+		networking.SendLeaveGame()
+	}
 }
 
 func readLoop() {
@@ -44,18 +62,14 @@ func readLoop() {
 			bot.ProcessGameEnded(&data)
 			log.Printf("Game ended")
 			return
-		case "CONNECTION_INIT":
-			bot.ProcessConnectionInit(&data)
-		case "PLAYER_JOINED":
-			bot.ProcessPlayerJoined(&data)
-		case "GAME_INIT":
-			bot.ProcessGameInit(&data)
 		case "CAUGHT":
 			bot.ProcessCaught(&data)
 		case "VOTE_RESULT":
 			bot.ProcessVoteResult(&data)
 		case "ERROR":
 			bot.ProcessGameError(&data)
+		case "CONNECTION_INIT", "PLAYER_JOINED":
+			log.Printf("Ignoring message of type %s", msg_type)
 		}
 	}
 }

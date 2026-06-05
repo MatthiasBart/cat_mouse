@@ -31,40 +31,10 @@ type PlayerJoinedMessage struct {
 	} `json:"player"`
 }
 
-// GameInitFieldSize represents the field size in a GAME_INIT message.
-type GameInitFieldSize struct {
-	Width  int64 `json:"width"`
-	Height int64 `json:"height"`
-}
-
-// GameInitExit represents one subway exit in a GAME_INIT message.
-type GameInitExit struct {
-	ID int64 `json:"id"`
-	X  int64 `json:"x"`
-	Y  int64 `json:"y"`
-}
-
-// GameInitSubway represents one subway in a GAME_INIT message.
-type GameInitSubway struct {
-	ID    int64          `json:"id"`
-	Name  string         `json:"name,omitempty"`
-	Exits []GameInitExit `json:"exits"`
-}
-
 // PositionMessage represents a 2D position in WS payloads.
 type PositionMessage struct {
 	X int64 `json:"x"`
 	Y int64 `json:"y"`
-}
-
-// GameInitMessage represents a GAME_INIT server message.
-type GameInitMessage struct {
-	Type           string             `json:"type"`
-	Code           string             `json:"code,omitempty"`
-	Role           string             `json:"role"`
-	PlayerPosition *PositionMessage   `json:"playerPosition,omitempty"`
-	FieldSize      *GameInitFieldSize `json:"fieldSize,omitempty"`
-	Subways        []GameInitSubway   `json:"subways,omitempty"`
 }
 
 // PlayerStateMessage represents the current player state in a GAME_UPDATE message.
@@ -102,7 +72,7 @@ type VoteEntryMessage struct {
 
 // ActiveVoteMessage represents the active vote section of a GAME_UPDATE message.
 type ActiveVoteMessage struct {
-	TimeLeft int64              `json:"timeLeft"`
+	TimeLeft float64            `json:"timeLeft"`
 	Votes    []VoteEntryMessage `json:"votes"`
 }
 
@@ -134,8 +104,14 @@ type GameUpdateMessage struct {
 	Player     PlayerStateMessage  `json:"player"`
 	Mice       []MouseStateMessage `json:"mice"`
 	Cats       []CatStateMessage   `json:"cats"`
-	ActiveVote *ActiveVoteMessage  `json:"active_vote,omitempty"`
+	ActiveVote *ActiveVoteMessage  `json:"activeVote,omitempty"`
 	Subways    []GameUpdateSubway  `json:"subways,omitempty"`
+	FieldSize  GameFieldSize       `json:"fieldSize"`
+}
+
+type GameFieldSize struct {
+	Width  int64 `json:"width"`
+	Height int64 `json:"height"`
 }
 
 // CaughtMessage represents a CAUGHT server message.

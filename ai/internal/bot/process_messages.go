@@ -10,7 +10,7 @@ import (
 func ProcessGameError(data *[]byte) {
 	var msg networking.ErrorMessage
 	if err := json.Unmarshal(*data, &msg); err == nil {
-		panic("unimplemented")
+		log.Fatalf("Received error %v", err)
 	} else {
 		log.Printf("decode ERROR: %v", err)
 	}
@@ -28,7 +28,7 @@ func ProcessGameEnded(data *[]byte) {
 func ProcessVoteResult(data *[]byte) {
 	var msg networking.VoteResultMessage
 	if err := json.Unmarshal(*data, &msg); err == nil {
-		panic("unimplemented")
+		processVoteResultForMouse(msg.WinSubway)
 	} else {
 		log.Printf("decode VOTE_RESULT: %v", err)
 	}
@@ -41,15 +41,6 @@ func ProcessCaught(data *[]byte) {
 	} else {
 		log.Printf("decode CAUGHT: %v", err)
 	}
-}
-
-func ProcessGameInit(data *[]byte) {
-	// not sended anymore?
-	panic("unimplemented")
-}
-
-func ProcessPlayerJoined(data *[]byte) {
-	// currently not needed
 }
 
 func ProcessGameUpdate(data *[]byte) {
@@ -66,8 +57,4 @@ func ProcessGameUpdate(data *[]byte) {
 	} else {
 		log.Printf("decode GAME_UPDATE: %v", err)
 	}
-}
-
-func ProcessConnectionInit(data *[]byte) {
-	// currently not needed
 }
