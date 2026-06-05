@@ -69,7 +69,7 @@ const renderDevPlayerPosition = (player: Player): JSX.Element => {
         pointerEvents: "none",
       }}
     >
-      Player: ({player.x}, {player.y})
+      Player: ({!!player.subway ? ("Subway " + player.subway) : `${player.x}, ${player.y}`})
     </div>
   );
 };
@@ -146,6 +146,7 @@ export function renderComponents(
         });
       })()}
       {gameState.cats.map((cat: Cat, index: number) => {
+        const ghostCat = !!player.subway // if player is in subway, any cats returned from server are ghost cats
         return (
           <div
             key={index}
@@ -162,12 +163,12 @@ export function renderComponents(
           >
             <img
               src="./cat.png"
-              alt={cat.type === "ghost" ? "ghost cat" : "cat"}
+              alt={ghostCat ? "ghost cat" : "cat"}
               style={{
                 width: 90,
                 height: 90,
-                opacity: cat.type === "ghost" ? 0.6 : 1,
-                filter: cat.type === "ghost" ? "grayscale(100%)" : "none",
+                opacity: ghostCat ? 0.6 : 1,
+                filter: ghostCat ? "grayscale(100%)" : "none",
               }}
             />
             {renderNameTag(cat.name)}
