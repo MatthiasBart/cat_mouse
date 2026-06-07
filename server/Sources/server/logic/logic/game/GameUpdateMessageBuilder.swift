@@ -37,11 +37,7 @@ class GameUpdateMessageBuilder {
 }
 
     func player(_ player: any Player) -> Self {
-        if let cat = player as? Cat {
-            message.player = PlayerDTO(cat: cat)
-        } else if let mouse = player as? Mouse {
-            message.player = PlayerDTO(mouse: mouse)
-        }
+        message.player = player.toDTO()
         return self
     }
 

@@ -176,11 +176,7 @@ public class Game: @unchecked Sendable {
         let numberOfSubways = Int64(subways.count)
         logger.info("position players")
         for player in players {
-            if let mouse = player as? Mouse {
-                mouse.subway = Int64.random(in: 0..<numberOfSubways)
-            } else if player is Cat {
-                player.position = .random
-            }
+            player.initialPlacement(subwayCount: numberOfSubways)
         }
     }
 
@@ -199,16 +195,11 @@ public class Game: @unchecked Sendable {
 
         player.position = newPosition
 
-        if let cat = player as? Cat {
-            for mouse in mice.filter({ $0.subway == nil }) {
-               if cat.position.isNear(mouse.position) && mouse.caught == nil {
-                   cat.caught.append(mouse.id)
-                   mouse.caught = cat.id
-                   caughtMice += 1
-                   logger.info("mouse \(mouse.id) caugth by \(cat.id)")
-                   gameDelegate?.gotCaught(mouse.id)
-               }
-            }
+        let caughtIds = player.catchNearbyMice(from: mice.filter { $0.subway == nil })
+        for mouseId in caughtIds {
+            caughtMice += 1
+            logger.info("mouse \(mouseId) caught by \(player.id)")
+            gameDelegate?.gotCaught(mouseId)
         }
     }
 }

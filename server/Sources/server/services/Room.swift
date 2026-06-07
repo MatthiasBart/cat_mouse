@@ -59,16 +59,16 @@ actor Room {
             game.endGame()
 
             if let winner = game.winner {
-            try? await broadcast(GameEndedMessage(
-                player: .init(
-                    id: winner.id,
-                    name: winner.name,
-                    type: winner is Cat ? "CAT" : "MOUSE",
-                    caught: (winner as? Cat).map { Int64($0.caught.count) },
-                    timeOnSurface: (winner as? Mouse).map { Int64($0.totalTimeOnSurface) }
-                ),
-                totalTime: Int64(Game.duration)
-            ))
+                try? await broadcast(GameEndedMessage(
+                    player: .init(
+                        id: winner.id,
+                        name: winner.name,
+                        type: winner is Cat ? "CAT" : "MOUSE",
+                        caught: (winner as? Cat).map { Int64($0.caught.count) },
+                        timeOnSurface: (winner as? Mouse).map { Int64($0.totalTimeOnSurface) }
+                    ),
+                    totalTime: Int64(Game.duration)
+                ))
             }
         }
     }
@@ -148,16 +148,16 @@ actor Room {
     }
 
     func playerInfos() -> [ConnectionInitMessage.PlayerInfo] {
-    game.players.map { player in
-        ConnectionInitMessage.PlayerInfo(
-            playerId: player.id,
-            playerName: player.name,
-            role: player is Cat ? .cat : .mouse,
-            isCreator: game.creator == player.id,
-            isComputer: false
-        )
+        game.players.map { player in
+            ConnectionInitMessage.PlayerInfo(
+                playerId: player.id,
+                playerName: player.name,
+                role: player.role,
+                isCreator: game.creator == player.id,
+                isComputer: false
+            )
+        }
     }
-}
 
     func broadcast(_ message: any ServerMessage) async throws {
         for (_, ws) in wsStore {
