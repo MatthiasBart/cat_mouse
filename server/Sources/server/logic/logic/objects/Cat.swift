@@ -4,7 +4,7 @@ public class Cat: Player {
     public var id: Int64 = -1
     var name: String = ""
     var position: Position = .base
-    var caught: [Mouse.ID] = []
+    private(set) var caught: [Mouse.ID] = []
     private var type = "live"
     let speed: Int64 = 15
 
@@ -18,7 +18,7 @@ public class Cat: Player {
         var caughtIds: [Mouse.ID] = []
         for mouse in mice where mouse.caught == nil && position.isNear(mouse.position) {
             caught.append(mouse.id)
-            mouse.caught = id
+            mouse.beCaught(by: id)
             caughtIds.append(mouse.id)
         }
         return caughtIds

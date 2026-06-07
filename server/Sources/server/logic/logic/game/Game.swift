@@ -116,10 +116,8 @@ public class Game: @unchecked Sendable {
     }
 
     public func endGame() {
-        for mouse in mice { 
-            if mouse.subway != nil {
-                mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
-            }
+        for mouse in mice {
+            mouse.finalizeTimeOnSurface()
         }
         
         logger.info("setting winner")
@@ -216,11 +214,9 @@ extension Game {
 
         ghostCats[subway.id] = cats.map{ GhostCat(from: $0) }
 
-        mouse.subway = subway.id
+        mouse.enterSubway(subway.id)
 
         logger.info("mouse \(mouse) entered sub \(subway)")
-
-        mouse.totalTimeOnSurface += mouse.lastExit.distance(to: Date())
     }
 
     public func leave(exit: Int64, mouse: Int64) throws {
@@ -231,11 +227,7 @@ extension Game {
             throw GameError.noMouseFoundForID
         }
 
-        if mouse.subway == exit.subway.id { 
-            mouse.subway = nil
-            mouse.position = exit.position
-            mouse.lastExit = Date()
-        }
+        mouse.exit(via: exit)
 
         logger.info("mouse \(mouse) left sub \(exit.subway) via exit \(exit)")
 

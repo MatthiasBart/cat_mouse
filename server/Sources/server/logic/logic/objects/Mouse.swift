@@ -3,11 +3,11 @@ import Foundation
 class Mouse: Player {
     var id: Int64 = -1
     var name: String = ""
-    var subway: Subway.ID? = nil
+    private(set) var subway: Subway.ID? = nil
     var position: Position = .base
-    var caught: Cat.ID? = nil
-    var totalTimeOnSurface: TimeInterval = 0
-    var lastExit: Date = Date()
+    private(set) var caught: Cat.ID? = nil
+    private(set) var totalTimeOnSurface: TimeInterval = 0
+    private(set) var lastExit: Date = Date()
     let speed: Int64 = 20
 
     var role: Role { .mouse }
@@ -20,6 +20,28 @@ class Mouse: Player {
 
     func toDTO() -> PlayerDTO {
         PlayerDTO(id: id, name: name, role: "mouse", subway: subway, position: position, caught: caught ?? -1)
+    }
+
+    func enterSubway(_ subwayId: Subway.ID) {
+        totalTimeOnSurface += lastExit.distance(to: Date())
+        subway = subwayId
+    }
+
+    func exit(via exitPoint: Exit) {
+        guard subway == exitPoint.subway.id else { return }
+        subway = nil
+        position = exitPoint.position
+        lastExit = Date()
+    }
+
+    func beCaught(by catId: Cat.ID) {
+        caught = catId
+    }
+
+    func finalizeTimeOnSurface() {
+        if subway == nil {
+            totalTimeOnSurface += lastExit.distance(to: Date())
+        }
     }
 
 }
