@@ -1,14 +1,19 @@
 import Foundation
 
 class Mouse: Player {
-    var id: Int64 = -1
-    var name: String = ""
+    let id: Int64
+    let name: String
     private(set) var subway: Subway.ID? = nil
     var position: Position = .base
     private(set) var caught: Cat.ID? = nil
     private(set) var totalTimeOnSurface: TimeInterval = 0
     private(set) var lastExit: Date = Date()
     let speed: Int64 = 20
+
+    init(id: Int64, name: String) {
+        self.id = id
+        self.name = name
+    }
 
     var role: Role { .mouse }
 
@@ -19,7 +24,7 @@ class Mouse: Player {
     func catchNearbyMice(from mice: [Mouse]) -> [Mouse.ID] { [] }
 
     func toDTO() -> PlayerDTO {
-        PlayerDTO(id: id, name: name, role: "mouse", subway: subway, position: position, caught: caught ?? -1)
+        PlayerDTO(id: id, name: name, role: "mouse", subway: subway, position: position, caught: caught)
     }
 
     func enterSubway(_ subwayId: Subway.ID) {

@@ -12,28 +12,12 @@ class Voting {
         self.manager = manager
     }
 
-    func highestVotedSub() -> Int64 {
+    func highestVotedSub() -> Subway.ID? {
         var voteCounts: [Subway.ID: Int64] = [:]
-        for (mouse, subway) in votes {
-            if let count = voteCounts[subway] { 
-                voteCounts[subway] = count + 1
-            } else { 
-                voteCounts[subway] = 1
-            }
+        for (_, subway) in votes {
+            voteCounts[subway] = (voteCounts[subway] ?? 0) + 1
         }
-
-        var highestVotedSubway: Int64 = -1
-        for (sub, count) in voteCounts {
-            if highestVotedSubway == -1 { 
-                highestVotedSubway = sub
-            } else {
-                if count > voteCounts[highestVotedSubway]! {
-                   highestVotedSubway = sub 
-                }
-            }
-        }
-
-        return highestVotedSubway
+        return voteCounts.max(by: { $0.value < $1.value })?.key
     }
 }
 

@@ -1,12 +1,16 @@
 import Foundation
 
-public class Cat: Player {
-    public var id: Int64 = -1
-    var name: String = ""
+class Cat: Player {
+    let id: Int64
+    let name: String
     var position: Position = .base
     private(set) var caught: [Mouse.ID] = []
-    private var type = "live"
     let speed: Int64 = 15
+
+    init(id: Int64, name: String) {
+        self.id = id
+        self.name = name
+    }
 
     var role: Role { .cat }
 

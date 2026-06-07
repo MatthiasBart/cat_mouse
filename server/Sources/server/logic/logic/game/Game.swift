@@ -30,7 +30,7 @@ public class Game: @unchecked Sendable {
 
     private(set) var endTime: Date = Date()
 
-    private(set) var creator: Int64
+    private(set) var creator: Int64?
     private(set) var winner: (any Player)?
 
     var gameDelegate: (any GameDelegate)?
@@ -61,14 +61,12 @@ public class Game: @unchecked Sendable {
         subways = []
         exits = []
         votings = [:]
-        creator = -1
+        creator = nil
         ghostCats = [:]
     }
 
     public func addMouse(name: String) -> Int64 {
-        let mouse = Mouse()
-        mouse.name = name
-        mouse.id = Int64(UUID().hashValue)
+        let mouse = Mouse(id: Int64(UUID().hashValue), name: name)
         self.players.append(mouse)
         if players.count == 1 { creator = mouse.id }
         logger.info("\(name) as mouse added")
@@ -76,9 +74,7 @@ public class Game: @unchecked Sendable {
     }
 
     public func addCat(name: String) -> Int64 {
-        let cat = Cat()
-        cat.name = name
-        cat.id = Int64(UUID().hashValue)
+        let cat = Cat(id: Int64(UUID().hashValue), name: name)
         self.players.append(cat)
         if players.count == 1 { creator = cat.id }
         logger.info("\(name) as cat added")
@@ -90,9 +86,10 @@ public class Game: @unchecked Sendable {
             let miceInSub = mice.filter({ $0.subway == subway })
             if voting.isRunOut() || miceInSub.count == voting.votes.count {
                 let miceInSubIds = miceInSub.map { $0.id }
-                let votingResult = voting.highestVotedSub()
-                logger.info("voteResult in \(subway) result \(votingResult) for mice \(miceInSubIds)")
-                gameDelegate?.voteResult(votingResult, for: miceInSubIds)        
+                if let votingResult = voting.highestVotedSub() {
+                    logger.info("voteResult in \(subway) result \(votingResult) for mice \(miceInSubIds)")
+                    gameDelegate?.voteResult(votingResult, for: miceInSubIds)
+                }
                 votings[subway] = nil
             }
         }
@@ -193,7 +190,7 @@ public class Game: @unchecked Sendable {
 
         logger.info("player \(player) moved \(direction.rawValue) to \(newPosition)")
 
-        player.position = newPosition
+        player.move(to: newPosition)
 
         let caughtIds = player.catchNearbyMice(from: mice.filter { $0.subway == nil })
         for mouseId in caughtIds {
@@ -295,7 +292,7 @@ extension Game {
             // checks if all mice currently in subway have voted
             // therefore does not matter if mice that already left voted,
             // or mice that later on joined
-            logger.info("all mice in sub \(mouse.subway ?? -1) voted for sub \(subway)")
+            logger.info("all mice in sub \(String(describing: mouse.subway)) voted for sub \(subway)")
             voting.endTime = Date()
         }
     }

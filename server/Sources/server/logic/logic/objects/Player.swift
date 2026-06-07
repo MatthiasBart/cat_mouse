@@ -1,8 +1,8 @@
 import Foundation
 
 protocol Player: AnyObject, Identifiable, Movable, Encodable {
-    var id: Int64 { get set }
-    var name: String { get set }
+    var id: Int64 { get }
+    var name: String { get }
     var speed: Int64 { get }
     var role: Role { get }
     func initialPlacement(subwayCount: Int64)
@@ -16,7 +16,7 @@ class PlayerDTO: Encodable {
     var role: String
     var subway: Int64?
     var position: Position
-    var caught: Int64
+    var caught: Int64?
 
     init(
         id: Int64,
@@ -24,7 +24,7 @@ class PlayerDTO: Encodable {
         role: String,
         subway: Int64?,
         position: Position,
-        caught: Int64
+        caught: Int64?
     ) {
         self.id = id
         self.name = name
