@@ -114,12 +114,7 @@ actor Room {
             playerId = game.addMouse(name: name)
         }
 
-        if game.players.count == 1 {
-            game.creator = playerId
-            logger.info("creator \(name) joined with \(playerId)")
-        } else {
-            logger.info("player \(name) joined with \(playerId)")
-        }
+        logger.info("player \(name) joined with \(playerId)")
 
         try? await broadcast(
             PlayerJoinedMessage(

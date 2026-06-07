@@ -22,20 +22,20 @@ protocol GameDelegate {
 }
 
 public class Game: @unchecked Sendable {
-    var players: [any Player]
-    var subways: [Subway]
-    var exits: [Exit]
-    var votings: [Subway.ID: Voting]
-    var ghostCats: [Subway.ID: [GhostCat]]
+    private(set) var players: [any Player]
+    private(set) var subways: [Subway]
+    private(set) var exits: [Exit]
+    private(set) var votings: [Subway.ID: Voting]
+    private(set) var ghostCats: [Subway.ID: [GhostCat]]
 
-    var endTime: Date = Date()
+    private(set) var endTime: Date = Date()
 
-    var creator: Int64 
-    var winner: (any Player)?
+    private(set) var creator: Int64
+    private(set) var winner: (any Player)?
 
     var gameDelegate: (any GameDelegate)?
 
-    var caughtMice: Int64 = 0
+    private var caughtMice: Int64 = 0
 
     var cats: [Cat] { 
         players.compactMap {
@@ -65,21 +65,23 @@ public class Game: @unchecked Sendable {
         ghostCats = [:]
     }
 
-    public func addMouse(name: String) -> Int64{
-        logger.info("\(name) as mouse added")
+    public func addMouse(name: String) -> Int64 {
         let mouse = Mouse()
         mouse.name = name
         mouse.id = Int64(UUID().hashValue)
         self.players.append(mouse)
+        if players.count == 1 { creator = mouse.id }
+        logger.info("\(name) as mouse added")
         return mouse.id
     }
 
     public func addCat(name: String) -> Int64 {
-        logger.info("\(name) as cat added")
         let cat = Cat()
         cat.name = name
         cat.id = Int64(UUID().hashValue)
         self.players.append(cat)
+        if players.count == 1 { creator = cat.id }
+        logger.info("\(name) as cat added")
         return cat.id
     }
 
