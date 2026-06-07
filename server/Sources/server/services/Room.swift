@@ -87,20 +87,10 @@ actor Room {
     }
 
     func reactTo(_ message: any ClientMessage, of player: Int64) throws {
-        if let move = message as? MoveMessage {
-            try game.move(player: player, .init(rawValue: move.direction.rawValue)!)
-        } else if let leave = message as? LeaveSubwayMessage {
-            try game.leave(exit: leave.exitId, mouse: player)
-        } else if let enter = message as? EnterSubwayMessage {
-            try game.enter(subway: enter.subwayId, mouse: player)
-        } else if let _ = message as? StartVotingMessage {
-            try game.startVoting(manager: player)
-        } else if let _ = message as? LeaveGameMessage {
-            game.leaveGame(player: player)
+        try message.execute(on: game, by: player)
+        if message.type == .leaveGame {
             let _ = wsStore[player]?.close()
             deleteWS(for: player)
-        } else if let vote = message as? VoteDecisionMessage {
-            try game.vote(subway: vote.target_subway_id_vote, mouse: player)
         }
     }
 
