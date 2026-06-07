@@ -30,12 +30,13 @@ public class Cat: Player {
 
 }
 
-class GhostCat: Cat {
-    private var type = "ghost"
-    var lastSeen: Date = Date()
+class GhostCat: Positionable {
+    let id: Int64
+    let name: String
+    var position: Position
+    var lastSeen: Date
 
     init(from cat: Cat) {
-        super.init()
         self.id = cat.id
         self.name = cat.name
         self.position = cat.position

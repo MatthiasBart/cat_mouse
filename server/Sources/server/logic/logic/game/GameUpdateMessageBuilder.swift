@@ -9,7 +9,12 @@ class GameUpdateMessageBuilder {
     }
 
     func cats(_ cats: [Cat]) -> Self {
-        message.cats = cats
+        message.cats = cats.map { CatDTO(id: $0.id, name: $0.name, position: $0.position, type: "live") }
+        return self
+    }
+
+    func cats(_ ghostCats: [GhostCat]) -> Self {
+        message.cats = ghostCats.map { CatDTO(id: $0.id, name: $0.name, position: $0.position, type: "ghost") }
         return self
     }
 
