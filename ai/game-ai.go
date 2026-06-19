@@ -56,20 +56,20 @@ func readLoop() {
 			log.Printf("received websocket message type: %s", msg_type)
 		}
 		switch msg_type {
+		case "CONNECTION_INIT", "PLAYER_JOINED":
+			log.Printf("Ignoring message of type %s", msg_type)
 		case "GAME_UPDATE":
 			bot.ProcessGameUpdate(&data)
-		case "GAME_ENDED":
-			bot.ProcessGameEnded(&data)
-			log.Printf("Game ended")
-			return
-		case "CAUGHT":
-			bot.ProcessCaught(&data)
 		case "VOTE_RESULT":
 			bot.ProcessVoteResult(&data)
 		case "ERROR":
 			bot.ProcessGameError(&data)
-		case "CONNECTION_INIT", "PLAYER_JOINED":
-			log.Printf("Ignoring message of type %s", msg_type)
+		case "GAME_ENDED":
+			log.Printf("Game ended")
+			return
+		case "CAUGHT":
+			log.Printf("Caught")
+			return
 		}
 	}
 }

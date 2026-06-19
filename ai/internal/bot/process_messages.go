@@ -16,30 +16,12 @@ func ProcessGameError(data *[]byte) {
 	}
 }
 
-func ProcessGameEnded(data *[]byte) {
-	var msg networking.GameEndedMessage
-	if err := json.Unmarshal(*data, &msg); err == nil {
-		panic("unimplemented")
-	} else {
-		log.Printf("decode GAME_ENDED: %v", err)
-	}
-}
-
 func ProcessVoteResult(data *[]byte) {
 	var msg networking.VoteResultMessage
 	if err := json.Unmarshal(*data, &msg); err == nil {
 		processVoteResultForMouse(msg.WinSubway)
 	} else {
 		log.Printf("decode VOTE_RESULT: %v", err)
-	}
-}
-
-func ProcessCaught(data *[]byte) {
-	var msg networking.CaughtMessage
-	if err := json.Unmarshal(*data, &msg); err == nil {
-		panic("unimplemented")
-	} else {
-		log.Printf("decode CAUGHT: %v", err)
 	}
 }
 
