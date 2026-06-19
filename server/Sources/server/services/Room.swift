@@ -59,16 +59,16 @@ actor Room {
             game.endGame()
 
             if let winner = game.winner {
-            try? await broadcast(GameEndedMessage(
-                player: .init(
-                    id: winner.id,
-                    name: winner.name,
-                    type: winner is Cat ? "CAT" : "MOUSE",
-                    caught: (winner as? Cat).map { Int64($0.caught.count) },
-                    timeOnSurface: (winner as? Mouse).map { Int64($0.totalTimeOnSurface) }
-                ),
-                totalTime: Int64(Game.duration)
-            ))
+                try? await broadcast(GameEndedMessage(
+                    player: .init(
+                        id: winner.id,
+                        name: winner.name,
+                        type: winner is Cat ? "CAT" : "MOUSE",
+                        caught: (winner as? Cat).map { Int64($0.caught.count) },
+                        timeOnSurface: (winner as? Mouse).map { Int64($0.totalTimeOnSurface) }
+                    ),
+                    totalTime: Int64(Game.duration)
+                ))
             }
         }
     }
@@ -87,20 +87,10 @@ actor Room {
     }
 
     func reactTo(_ message: any ClientMessage, of player: Int64) throws {
-        if let move = message as? MoveMessage {
-            try game.move(player: player, .init(rawValue: move.direction.rawValue)!)
-        } else if let leave = message as? LeaveSubwayMessage {
-            try game.leave(exit: leave.exitId, mouse: player)
-        } else if let enter = message as? EnterSubwayMessage {
-            try game.enter(subway: enter.subwayId, mouse: player)
-        } else if let _ = message as? StartVotingMessage {
-            try game.startVoting(manager: player)
-        } else if let _ = message as? LeaveGameMessage {
-            game.leaveGame(player: player)
+        try message.execute(on: game, by: player)
+        if message.type == .leaveGame {
             let _ = wsStore[player]?.close()
             deleteWS(for: player)
-        } else if let vote = message as? VoteDecisionMessage {
-            try game.vote(subway: vote.target_subway_id_vote, mouse: player)
         }
     }
 
@@ -124,12 +114,7 @@ actor Room {
             playerId = game.addMouse(name: name)
         }
 
-        if game.players.count == 1 {
-            game.creator = playerId
-            logger.info("creator \(name) joined with \(playerId)")
-        } else {
-            logger.info("player \(name) joined with \(playerId)")
-        }
+        logger.info("player \(name) joined with \(playerId)")
 
         try? await broadcast(
             PlayerJoinedMessage(
@@ -148,16 +133,16 @@ actor Room {
     }
 
     func playerInfos() -> [ConnectionInitMessage.PlayerInfo] {
-    game.players.map { player in
-        ConnectionInitMessage.PlayerInfo(
-            playerId: player.id,
-            playerName: player.name,
-            role: player is Cat ? .cat : .mouse,
-            isCreator: game.creator == player.id,
-            isComputer: false
-        )
+        game.players.map { player in
+            ConnectionInitMessage.PlayerInfo(
+                playerId: player.id,
+                playerName: player.name,
+                role: player.role,
+                isCreator: game.creator == player.id,
+                isComputer: false
+            )
+        }
     }
-}
 
     func broadcast(_ message: any ServerMessage) async throws {
         for (_, ws) in wsStore {

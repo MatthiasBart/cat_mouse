@@ -1,9 +1,13 @@
 import Foundation
 
 protocol Player: AnyObject, Identifiable, Movable, Encodable {
-    var id: Int64 { get set }
-    var name: String { get set }
+    var id: Int64 { get }
+    var name: String { get }
     var speed: Int64 { get }
+    var role: Role { get }
+    func initialPlacement(subwayCount: Int64)
+    func catchNearbyMice(from mice: [Mouse]) -> [Mouse.ID]
+    func toDTO() -> PlayerDTO
 }
 
 class PlayerDTO: Encodable {
@@ -12,7 +16,7 @@ class PlayerDTO: Encodable {
     var role: String
     var subway: Int64?
     var position: Position
-    var caught: Int64
+    var caught: Int64?
 
     init(
         id: Int64,
@@ -20,7 +24,7 @@ class PlayerDTO: Encodable {
         role: String,
         subway: Int64?,
         position: Position,
-        caught: Int64
+        caught: Int64?
     ) {
         self.id = id
         self.name = name
@@ -28,27 +32,5 @@ class PlayerDTO: Encodable {
         self.subway = subway
         self.position = position
         self.caught = caught
-    }
-
-    convenience init(cat: Cat) {
-        self.init(
-            id: cat.id,
-            name: cat.name,
-            role: "cat",
-            subway: nil,
-            position: cat.position,
-            caught: Int64(cat.caught.count)
-        )
-    }
-
-    convenience init(mouse: Mouse) {
-        self.init(
-            id: mouse.id,
-            name: mouse.name,
-            role: "mouse",
-            subway: mouse.subway,
-            position: mouse.position,
-            caught: mouse.caught ?? -1
-        )
     }
 }

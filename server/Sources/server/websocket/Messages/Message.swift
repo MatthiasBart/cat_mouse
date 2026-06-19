@@ -10,10 +10,12 @@ enum ClientMessageType: String, Codable {
 
 protocol ClientMessage: Decodable, Sendable {
   var type: ClientMessageType { get }
+  func execute(on game: Game, by player: Int64) throws
 }
 
 struct AnyClientMessage: ClientMessage {
   var type: ClientMessageType
+  func execute(on game: Game, by player: Int64) throws {}
 }
 
 enum ServerMessageType: String, Codable {

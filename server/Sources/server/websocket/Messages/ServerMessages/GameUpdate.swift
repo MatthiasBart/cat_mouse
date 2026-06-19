@@ -1,4 +1,11 @@
-import Foundation 
+import Foundation
+
+struct CatDTO: Encodable {
+    let id: Int64
+    let name: String
+    let position: Position
+    let type: String
+}
 
 struct GameUpdateSubwayDTO: Encodable {
   let id: Int64
@@ -40,7 +47,7 @@ struct GameUpdateMessage: ServerMessage, @unchecked Sendable {
   var timeLeft: Int64? = nil
   var player: PlayerDTO? = nil
   var mice: [Mouse] = []
-  var cats: [Cat] = []
+  var cats: [CatDTO] = []
   var activeVote: GameUpdateVotingDTO? = nil
   var subways: [GameUpdateSubwayDTO] = []
   var fieldSize: GameUpdateFieldSizeDTO? = nil
