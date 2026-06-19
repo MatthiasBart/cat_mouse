@@ -13,7 +13,7 @@ type point struct {
 }
 
 const (
-	speed    = 15              // TODO: split for cat and mouse
+	speed    = 15
 	deadzone = (speed / 2) + 5 // used as a buffer for checking if target reached
 )
 
