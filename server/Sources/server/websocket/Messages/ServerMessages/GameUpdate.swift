@@ -7,6 +7,14 @@ struct CatDTO: Encodable {
     let type: String
 }
 
+/// The reduced view other players get of a `Mouse` (contrast `PlayerDTO`, which is a mouse's
+/// view of itself).
+struct MouseDTO: Encodable {
+    let id: Int64
+    let name: String
+    let position: Position
+}
+
 struct GameUpdateSubwayDTO: Encodable {
   let id: Int64
   let exits: [GameUpdateExitDTO]
@@ -46,7 +54,7 @@ struct GameUpdateMessage: ServerMessage, @unchecked Sendable {
   let type: ServerMessageType = .gameUpdate
   var timeLeft: Int64? = nil
   var player: PlayerDTO? = nil
-  var mice: [Mouse] = []
+  var mice: [MouseDTO] = []
   var cats: [CatDTO] = []
   var activeVote: GameUpdateVotingDTO? = nil
   var subways: [GameUpdateSubwayDTO] = []

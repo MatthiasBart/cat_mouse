@@ -1,3 +1,4 @@
+/// Delegates to `Game.move`; inherits that method's preconditions and `GameError`s.
 struct MoveMessage: ClientMessage {
   var type: ClientMessageType { .move }
   var direction: Direction

@@ -48,7 +48,7 @@ export type GameInitMessage = {
 export type GameEndedMessage = {
   type: "GAME_ENDED",
   player: {
-    id: 7,
+    id: number,
     name: string,
     type: Role,
     caught: number | undefined,

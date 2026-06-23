@@ -22,22 +22,22 @@ struct GameStateCalculator: @unchecked Sendable {
     }
 
     private func gameState(for mouse: Mouse) throws -> GameUpdateMessage {
-        if let subway = mouse.subway {
+        if let subwayId = mouse.subway, let subway = game.subways.first(where: { $0.id == subwayId }) {
             return try GameUpdateMessageBuilder()
-                .mice(game.mice.filter { $0.subway == subway && $0.id != mouse.id })
-                .cats(game.ghostCats[subway] ?? [])
+                .mice(game.mice.filter { $0.subway == subwayId && $0.id != mouse.id })
+                .cats(subway.ghostCats)
                 .fieldSize(width: Position.MAX_X, height: Position.MAX_Y)
-                .subways(game.subways.filter { $0.id == subway }, exits: game.exits.filter { $0.subway.id == subway })
+                .subways([subway])
                 .player(mouse)
                 .timeLeft(Date().distance(to: game.endTime))
-                .voting(game.votings[subway], allSubways: game.subways)
+                .voting(subway.voting, allSubways: game.subways)
                 .build()
         } else {
             return try GameUpdateMessageBuilder()
                 .mice(game.mice.filter { $0.subway == nil && $0.caught == nil && $0.id != mouse.id })
                 .cats(game.cats)
                 .fieldSize(width: Position.MAX_X, height: Position.MAX_Y)
-                .subways(game.subways, exits: game.exits)
+                .subways(game.subways)
                 .player(mouse)
                 .timeLeft(Date().distance(to: game.endTime))
                 .build()
@@ -49,7 +49,7 @@ struct GameStateCalculator: @unchecked Sendable {
             .mice(game.mice.filter { $0.subway == nil && $0.caught == nil })
             .cats(game.cats.filter { $0.id != cat.id })
             .fieldSize(width: Position.MAX_X, height: Position.MAX_Y)
-            .subways(game.subways, exits: game.exits, hideSubways: true)
+            .subways(game.subways, hideSubways: true)
             .player(cat)
             .timeLeft(Date().distance(to: game.endTime))
             .build()

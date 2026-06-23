@@ -1,3 +1,4 @@
+/// Delegates to `Game.enter`; inherits that method's preconditions and `GameError`s.
 struct EnterSubwayMessage: ClientMessage {
     var type: ClientMessageType { .enterSubway }
     var subwayId: Int64

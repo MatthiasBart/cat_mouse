@@ -1,5 +1,8 @@
 import Foundation
 
+/// Tracks an in-progress vote among the mice in one subway for which subway to surface next.
+/// History constraint (client-responsible, per s4): `votes` must only be mutated while
+/// `!isRunOut()`; once run out, callers must treat this `Voting` as closed.
 class Voting {
     typealias Votes = [Mouse.ID: Subway.ID]
     var endTime: Date
@@ -12,6 +15,9 @@ class Voting {
         self.manager = manager
     }
 
+    /// Postcondition: returns the subway with the most votes, or `nil` if there are no votes
+    /// yet. Ties are broken arbitrarily by `max(by:)` - an accepted simplification, not a
+    /// guaranteed invariant.
     func highestVotedSub() -> Subway.ID? {
         var voteCounts: [Subway.ID: Int64] = [:]
         for (_, subway) in votes {
@@ -54,6 +60,8 @@ extension Voting: Encodable {
 extension Voting {
     static let duration: TimeInterval = 45
 
+    /// Postcondition: `true` iff `endTime` has passed; once true, callers must treat this
+    /// `Voting` as closed.
     func isRunOut() -> Bool {
         self.endTime < Date()
     }

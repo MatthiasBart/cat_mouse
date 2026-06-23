@@ -1,3 +1,4 @@
+/// Delegates to `Game.leaveGame`, which has no preconditions and never throws.
 struct LeaveGameMessage: ClientMessage {
     var type: ClientMessageType { .leaveGame }
 

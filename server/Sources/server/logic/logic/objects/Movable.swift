@@ -1,19 +1,6 @@
-protocol Movable: Positionable { 
+/// Abstraction over "can change its position" via a single, explicit operation.
+protocol Movable: Positionable {
+    /// Precondition: `position` must already be within the field's bounds.
+    /// Postcondition: afterwards `position == position` (the argument).
     func move(to position: Position)
-    func move(x: Int64, y: Int64)
-}
-
-extension Movable {
-    func move(to position: Position) {
-        self.position = position
-    }
-
-    func move(x: Int64, y: Int64) {
-        let newPosition = Position(
-            x: position.x + x,
-            y: position.y + y
-        )
-
-        move(to: newPosition)
-    }
 }

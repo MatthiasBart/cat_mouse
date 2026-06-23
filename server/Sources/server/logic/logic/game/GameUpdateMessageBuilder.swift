@@ -4,7 +4,7 @@ class GameUpdateMessageBuilder {
     private var message = GameUpdateMessage()
 
     func mice(_ mice: [Mouse]) -> Self {
-        message.mice = mice
+        message.mice = mice.map { MouseDTO(id: $0.id, name: $0.name, position: $0.position) }
         return self
     }
 
@@ -18,19 +18,17 @@ class GameUpdateMessageBuilder {
         return self
     }
 
-    func subways(_ subways: [Subway], exits: [Exit], hideSubways: Bool = false) -> Self {
+    func subways(_ subways: [Subway], hideSubways: Bool = false) -> Self {
     message.subways = subways.map { subway in
         GameUpdateSubwayDTO(
             id: hideSubways ? -1 : subway.id,
-            exits: exits
-                .filter { $0.subway.id == subway.id }
-                .map {
-                    GameUpdateExitDTO(
-                        id: $0.id,
-                        x: $0.position.x,
-                        y: $0.position.y
-                    )
-                }
+            exits: subway.exits.map {
+                GameUpdateExitDTO(
+                    id: $0.id,
+                    x: $0.position.x,
+                    y: $0.position.y
+                )
+            }
         )
     }
         return self
@@ -41,8 +39,13 @@ class GameUpdateMessageBuilder {
     return self
 }
 
-    func player(_ player: any Player) -> Self {
-        message.player = player.toDTO()
+    func player(_ cat: Cat) -> Self {
+        message.player = PlayerDTO(cat: cat)
+        return self
+    }
+
+    func player(_ mouse: Mouse) -> Self {
+        message.player = PlayerDTO(mouse: mouse)
         return self
     }
 

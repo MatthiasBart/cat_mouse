@@ -45,8 +45,13 @@ export function handleGameEndedMessage(
     value: Game | null | ((prev: Game | null) => Game | null),
   ) => void,
 ) {
+  const detail =
+    event.player.timeOnSurface !== undefined
+      ? `Time on surface: ${Math.round(event.player.timeOnSurface)}s`
+      : `Mice caught: ${event.player.caught ?? 0}`;
+
   alert(
-    `Game ended! Player ${event.player.name} (${event.player.type}) won. \nTotal time: ${Math.round(event.totalTime / 1000)}s`,
+    `Game ended! Player ${event.player.name} (${event.player.type}) won. \n${detail}`,
   );
   setGameState((prevGame) => {
     if (!prevGame) return prevGame;

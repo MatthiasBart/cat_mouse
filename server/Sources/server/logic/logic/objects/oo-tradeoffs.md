@@ -1,0 +1,33 @@
+oo tradeoffs: Positionable and Movable
+
+Positionable now requires only position { get }; Movable requires move(to:) but has no default implementation. Reason: a protocol extension can only use what the protocol itself requires, so a shared "self.position = position" default would have forced position back to { get set }, making it writable by anyone, not just through move(to:). Cat and Mouse instead store position as private(set) and each implement move(to:) themselves, a few duplicated lines, so the compiler enforces move(to:) as the only way to change it.
+
+move(x:y:) was removed: it was never called anywhere except by its own old default implementation.
+
+Exit.position and GhostCat.position became let, since neither type mutates position after init.
+
+Subway and Game's votings/ghostCats/exits dictionaries
+
+Subway was an empty id wrapper; Game held three parallel collections keyed by Subway.ID (votings, ghostCats, exits) and did all the lookup, filtering and mutation itself - an anemic Subway with the real behaviour living outside it. Asking for subway.voting and calling methods on it from Game would also violate the Law of Demeter (reaching through one collaborator into another). So Subway became a class that owns its own exits, ghostCats and voting, and exposes behaviour instead (addExit, refreshGhostCats, pruneStaleGhostCats, leave, startVoting, vote, endVoting, resolveVotingIfDone). Game now resolves ids, finds the right Subway, and tells it what to do; Voting is never exposed.
+
+This is "delegation", not the "Middle Man" smell, because each forwarding method is also where Subway enforces its own rules (e.g. an exit must be one of its own, a vote needs an active, not-run-out Voting) - Game no longer knows those rules itself.
+
+A side effect: Exit dropped its subway back-reference (it doesn't need to know its owner; the owner already knows it) - this also avoids a self-retain cycle that would otherwise exist now that Subway holds its own exits. Mouse.exit(via:) lost its own subway-match guard, since Subway.leave only ever looks an exit up among its own exits, so the guard was already redundant by construction. One behavioural side effect: leaving via an exit that belongs to a different subway than the one you're in now throws GameError.noHoleFoundForID instead of silently doing nothing, since the lookup is now scoped per-subway.
+
+Errors still reuse the existing GameError cases for now (e.g. SubwayError doesn't exist yet) - splitting per-layer error types is a deliberate follow-up, not done here.
+
+Should Subway also own its mice? (open question, not implemented)
+
+Subway needing "its" mice (to count votes, pick a new manager) while Mouse never needs its Subway as an object looked at first like the same Tell-Don't-Ask argument that justified moving exits/ghostCats/voting into Subway. But it isn't quite the same: a mouse's location is one of several mutually exclusive states (surface, or one of N subways), not a single fixed owner. If Subway cached its own mice: [Mouse], that would duplicate the relationship already recorded in mouse.subway, and every enter/exit would have to update both sides or they drift out of sync - a classic bidirectional-association bug. Game.checkGameState/leave/vote currently avoid this by deriving "mice in subway X" on demand via mice.filter, with mouse.subway as the single source of truth, and handing the result to Subway as a parameter instead of caching it there.
+
+This is the same idea ECS (Entity-Component-System, the dominant architecture in real game engines) uses for entity relationships: no object owns a back-reference to "its" members, state lives on the entity itself, and systems query for matches on demand. The old pre-refactor Game was not actually an ECS though - Cat/Mouse were rich classes bundling data and behaviour (the opposite of ECS's plain data components), and all logic lived in one Game god-object instead of separate single-purpose systems. ECS itself was rejected for this codebase: it buys cache-friendly iteration and parallel systems at the cost of no object protecting its own invariants (anyone can mutate any component), which is the wrong trade for a small server where Subway enforcing its own voting rules matters more than raw throughput.
+
+What's still open: mouse.subway: Subway.ID? overloads nil to mean "on the surface", which is a real, common state, not an absence. The cleaner fix discussed but not yet made is an explicit enum (e.g. case surface / case subway(Subway.ID)) so "where is this mouse" is exhaustively checked by the compiler instead of relying on remembering what nil means - while still keeping the on-demand filtering rather than introducing any owned mice collection.
+
+GameUpdateMessage.mice leaked raw Mouse state; toDTO() moved off Player
+
+GameUpdateMessageBuilder.cats(_:) already mapped Cat/GhostCat through a reduced CatDTO, but .mice(_:) just assigned the raw [Mouse] array straight into the outgoing message. Since Mouse auto-synthesized Encodable over all its stored properties, every other mouse in a room was leaking its own totalTimeOnSurface, lastExit, subway and caught fields to every other player - state Player.toDTO()/PlayerDTO existed specifically to keep contained. Fixed by adding MouseDTO (id, name, position only), mirrored after CatDTO, so .mice(_:) now maps through it like .cats(_:) already did.
+
+While fixing this, toDTO() moved off Player/Cat/Mouse entirely and became two overloaded convenience initializers, PlayerDTO(cat:) and PlayerDTO(mouse:). Reasoning (Fowler's DTO/Assembler pattern, also used in DDD): translating a domain object into audience-specific wire shapes is a separate responsibility from being that domain object - if Cat/Mouse kept growing a toXxxDTO() per consumer (self view, peer view, future spectator view, ...), that responsibility creep belongs on the domain class even less each time. GameUpdateMessageBuilder is already the assembler for this job; PlayerDTO's own initializers are now where "build my self-view" lives, and CatDTO/MouseDTO (sibling structs, not Player methods) are where "build my peer-view" lives.
+
+This did not need any is/as? type-check, unlike Room's winner branching: every real call site (GameStateCalculator's two private gameState(for:) methods) already had a concretely-typed Cat or Mouse, never any Player, so two statically overloaded player(_ cat: Cat)/player(_ mouse: Mouse) builder methods resolve at compile time - no runtime dispatch needed at all. Removing toDTO() also let Encodable be removed from the Player protocol entirely, since the only thing that had ever required it was the now-fixed raw-Mouse leak - so the same mistake can't quietly happen again through that conformance.

@@ -1,3 +1,4 @@
+/// Delegates to `Game.startVoting`; inherits that method's preconditions and `GameError`s.
 struct StartVotingMessage: ClientMessage {
     var type: ClientMessageType { .startVote }
 

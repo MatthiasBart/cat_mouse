@@ -63,7 +63,7 @@ actor Room {
                     player: .init(
                         id: winner.id,
                         name: winner.name,
-                        type: winner is Cat ? "CAT" : "MOUSE",
+                        type: winner.role.rawValue,
                         caught: (winner as? Cat).map { Int64($0.caught.count) },
                         timeOnSurface: (winner as? Mouse).map { Int64($0.totalTimeOnSurface) }
                     ),

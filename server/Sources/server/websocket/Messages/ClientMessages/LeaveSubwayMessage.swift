@@ -1,3 +1,4 @@
+/// Delegates to `Game.leave`; inherits that method's preconditions and `GameError`s.
 struct LeaveSubwayMessage: ClientMessage {
     var type: ClientMessageType { .leaveSubway }
     var exitId: Int64
