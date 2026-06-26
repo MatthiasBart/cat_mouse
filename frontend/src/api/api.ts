@@ -1,9 +1,11 @@
 import type { Role } from "../types";
 
+const backendBase = () => `http://${window.location.hostname}:8080`;
+
 export const joinGame = async (name: string, gameCode: string, role: Role): Promise<void> => {
   console.log("Joining game " + gameCode);
   const response = await fetch(
-    `http://localhost:8080/games/${gameCode}/players?playerName=${encodeURIComponent(name)}&role=${role}`,
+    `${backendBase()}/games/${gameCode}/players?playerName=${encodeURIComponent(name)}&role=${role}`,
     {
       method: "POST",
       credentials: "include",
@@ -19,7 +21,7 @@ export const createGame = async (
   role: Role,
   playerName: string,
 ): Promise<string> => {
-  const url = `http://localhost:8080/games?role=${encodeURIComponent(role)}&playerName=${encodeURIComponent(playerName)}`;
+  const url = `${backendBase()}/games?role=${encodeURIComponent(role)}&playerName=${encodeURIComponent(playerName)}`;
   const res = await fetch(url, {
     method: "POST",
     credentials: "include",
@@ -34,7 +36,7 @@ export const createGame = async (
 export async function addAI(code: string, role: Role): Promise<void> {
   console.log("addAI called with:", { code, role: role.toUpperCase() });
   const response = await fetch(
-    `http://localhost:8080/games/${encodeURIComponent(code)}/ai?role=${encodeURIComponent(role.toUpperCase())}`,
+    `${backendBase()}/games/${encodeURIComponent(code)}/ai?role=${encodeURIComponent(role.toUpperCase())}`,
     {
       method: "POST",
       credentials: "include",
@@ -48,7 +50,7 @@ export async function addAI(code: string, role: Role): Promise<void> {
 
 export async function startGame(code: string): Promise<void> {
   const response = await fetch(
-    `http://localhost:8080/games/${encodeURIComponent(code)}`,
+    `${backendBase()}/games/${encodeURIComponent(code)}`,
     {
       method: "PATCH",
       credentials: "include",

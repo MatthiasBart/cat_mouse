@@ -31,9 +31,10 @@ enum Entrypoint {
 }
 
 public func configure(_ app: Application) async throws {
+  app.http.server.configuration.hostname = "0.0.0.0"
 
     let cors = CORSMiddleware(configuration: .init(
-    allowedOrigin: .custom("http://localhost:5173"),
+    allowedOrigin: .originBased,
     allowedMethods: [.GET, .POST, .PATCH, .OPTIONS],
     allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith],
     allowCredentials: true

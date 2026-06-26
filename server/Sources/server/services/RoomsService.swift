@@ -4,6 +4,7 @@ private let logger = Logger(label: "RoomsService")
 
 actor RoomsService {
   var rooms: [String: Room] = [:]
+  private var nextCode: Int = 1
 
   func getWS(of player: Int64, in room: String) async -> WebSocket? {
       await rooms[room]?.wsStore[player]
@@ -39,7 +40,8 @@ actor RoomsService {
   }
 
   func createRoom(playerName: String, role: Role) async -> (code: String, playerId: Int64) {
-    let code = UUID().uuidString
+    let code = String(nextCode)
+    nextCode += 1
     let game = Game()
     let room = Room(game: game, code: code)
 

@@ -83,7 +83,7 @@ export function App() {
     sessionStorage.setItem("gameCode", code);
     setGameActive("room");
     console.log("opening websocket");
-    const socket = new WebSocket(`ws://localhost:8080/games/${code}/ws`);
+    const socket = new WebSocket(`ws://${window.location.hostname}:8080/games/${code}/ws`);
 
     socket.onopen = () => console.log("Connected to WebSocket server");
     socket.onmessage = (event: MessageEvent) => {
