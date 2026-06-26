@@ -1,3 +1,4 @@
+/// Position determines the x and y coordinates of an owning object. 
 struct Position: Encodable {
     var x: Int64
     var y: Int64
@@ -23,6 +24,8 @@ extension Position {
         ((position.y - distanceY) < self.y && (position.y + distanceY) > self.y)
     }
 
+    
+    /// Postcondition: Position x and y are only between 0 and `Position.MAX_*`.
     func inRange() -> Position { 
         Position(
                 x: max(0, min(Position.MAX_X, self.x)),
